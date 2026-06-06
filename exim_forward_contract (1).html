@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EXIM BANK — บริการ FX</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#C8102E;--blue:#003087;
+  --bg:#F7F8FA;--surf:#FFF;--bdr:#E4E7ED;--bdr2:#CBD0DC;
+  --t1:#1A1F2E;--t2:#52596B;--t3:#8B93A4;
+  --ok:#1D7A48;--ok-bg:#EDF7F2;
+  --wn:#7A5B00;--wn-bg:#FFF9E6;
+  --er:#C8102E;--er-bg:#FFF0F2;
+  --inf:#1A4FA0;--inf-bg:#EDF1FB;
+  --r:8px;--rs:5px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{font-family:'Noto Sans Thai',sans-serif;background:var(--bg);color:var(--t1);font-size:14px;line-height:1.6;display:flex;flex-direction:column;min-height:100vh;}
+.ic{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;vertical-align:middle;}
+.topbar{background:var(--blue);height:58px;padding:0 32px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:3px solid var(--red);}
+.t-logo{display:flex;align-items:center;gap:12px;text-decoration:none;}
+.t-emblem{width:36px;height:36px;border-radius:6px;overflow:hidden;display:flex;flex-direction:column;flex-shrink:0;}
+.t-em-t{flex:1;background:var(--red);display:flex;align-items:center;justify-content:center;}
+.t-em-b{flex:1;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;}
+.t-em-t span,.t-em-b span{font-size:8px;font-weight:800;color:#fff;letter-spacing:.5px;}
+.t-name{color:#fff;}.t-name-m{font-size:14px;font-weight:700;}.t-name-s{font-size:10px;opacity:.55;}
+.t-user{display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.8);font-size:13px;}
+.t-av{width:32px;height:32px;border-radius:50%;background:var(--red);border:2px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;}
+.subnav{background:#002070;height:38px;padding:0 32px;display:flex;align-items:center;gap:4px;flex-shrink:0;}
+.subnav a{font-size:12px;color:rgba(255,255,255,.5);text-decoration:none;padding:3px 10px;border-radius:4px;cursor:pointer;transition:color .15s;}
+.subnav a:hover{color:#fff;}.subnav a.active{color:#fff;background:var(--red);font-weight:600;}
+.subnav .sep{color:rgba(255,255,255,.3);font-size:11px;}
+.main{flex:1;padding:28px 32px;max-width:900px;margin:0 auto;width:100%;}
+.wizard{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:20px 24px 16px;margin-bottom:22px;}
+.wz-wrap{position:relative;}
+.wz-row{display:flex;align-items:flex-start;}
+.wz-line{position:absolute;top:13px;left:14px;right:14px;height:2px;background:var(--bdr);z-index:0;}
+.wz-done{position:absolute;top:13px;left:14px;height:2px;background:var(--red);z-index:0;width:0;transition:width .35s;}
+.wz-step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;z-index:1;}
+.wz-circle{width:28px;height:28px;border-radius:50%;border:2px solid var(--bdr2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--t3);background:var(--surf);transition:all .25s;flex-shrink:0;}
+.wz-step.done .wz-circle{background:var(--red);border-color:var(--red);color:#fff;}
+.wz-step.active .wz-circle{background:var(--blue);border-color:var(--blue);color:#fff;}
+.wz-label{font-size:10px;color:var(--t3);margin-top:6px;text-align:center;line-height:1.3;white-space:nowrap;}
+.wz-step.done .wz-label{color:var(--t2);}.wz-step.active .wz-label{color:var(--blue);font-weight:700;}
+.card{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:20px 24px;margin-bottom:16px;}
+.card-title{font-size:14px;font-weight:700;color:var(--t1);padding-bottom:14px;margin-bottom:18px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:8px;}
+.svc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-top:20px;}
+.svc-card{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:18px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;gap:10px;}
+.svc-card:hover{border-color:var(--blue);box-shadow:0 4px 16px rgba(0,48,135,.1);transform:translateY(-1px);}
+.svc-card.featured{border-color:var(--blue);border-width:2px;}
+.svc-icon{width:40px;height:40px;border-radius:var(--rs);display:flex;align-items:center;justify-content:center;}
+.svc-icon.red{background:var(--er-bg);}.svc-icon.blue{background:var(--inf-bg);}.svc-icon.green{background:var(--ok-bg);}
+.svc-name{font-size:13px;font-weight:700;color:var(--t1);}.svc-desc{font-size:12px;color:var(--t3);line-height:1.5;}
+.svc-badge{display:inline-flex;align-items:center;gap:4px;background:var(--inf-bg);color:var(--inf);font-size:11px;font-weight:600;padding:2px 8px;border-radius:8px;}
+.tc-box{background:var(--bg);border:1px solid var(--bdr);border-radius:var(--rs);padding:18px;height:290px;overflow-y:auto;font-size:13px;color:var(--t2);line-height:1.8;margin-bottom:16px;}
+.tc-box h4{color:var(--blue);font-size:13px;font-weight:700;margin:14px 0 6px;}.tc-box h4:first-child{margin-top:0;}
+.tc-accept{display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;line-height:1.7;}
+.tc-accept input{width:16px;height:16px;margin-top:3px;accent-color:var(--blue);flex-shrink:0;}
+.rate-table{width:100%;border-collapse:collapse;font-size:13px;}
+.rate-table th{background:var(--blue);color:#fff;padding:8px 12px;text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px;}
+.rate-table td{padding:10px 12px;border-bottom:1px solid var(--bdr);}
+.rate-table tr:last-child td{border-bottom:none;}
+.rate-table td:not(:first-child){text-align:right;font-weight:600;}
+.buy{color:var(--ok);}.sell{color:var(--er);}
+.rate-ts{font-size:11px;color:var(--t3);margin-top:8px;display:flex;align-items:center;gap:5px;}
+.fx-services{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px;}
+.fx-svc{border:1px solid var(--bdr);border-radius:var(--rs);padding:16px;transition:all .15s;}
+.fx-svc.active{border-color:var(--blue);background:var(--inf-bg);cursor:pointer;}
+.fx-svc.active:hover{box-shadow:0 2px 12px rgba(0,48,135,.12);}
+.fx-svc.inactive{opacity:.6;}
+.fx-svc-name{font-size:14px;font-weight:700;color:var(--blue);margin-bottom:3px;}
+.fx-svc-desc{font-size:12px;color:var(--t3);}
+.row{display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;}
+.fg{flex:1;min-width:180px;}.fg.full{flex:100%;}
+.fl{display:block;font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;}
+.fl .req{color:var(--red);}
+input[type=text],input[type=number],input[type=date],select{width:100%;padding:9px 12px;border:1px solid var(--bdr2);border-radius:var(--rs);font-size:14px;font-family:inherit;color:var(--t1);background:#fff;-webkit-appearance:none;appearance:none;transition:border-color .15s,box-shadow .15s;}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238B93A4' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:30px;}
+input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,48,135,.08);}
+input[type=date]::-webkit-calendar-picker-indicator{cursor:pointer;opacity:.6;}
+.hint{font-size:11px;color:var(--t3);margin-top:5px;}
+.hint.err{color:var(--er);}.hint.ok{color:var(--ok);}.hint.wn{color:var(--wn);}
+.rg{display:flex;gap:10px;flex-wrap:wrap;}
+.rp{display:flex;align-items:center;gap:8px;padding:8px 16px;border:1px solid var(--bdr2);border-radius:20px;cursor:pointer;font-size:13px;user-select:none;transition:all .15s;}
+.rp input{display:none;}.rp:hover{border-color:var(--blue);}
+.rp.on{border-color:var(--blue);background:#F0F4FF;color:var(--blue);font-weight:600;}
+.rdot{width:13px;height:13px;border-radius:50%;border:2px solid var(--bdr2);flex-shrink:0;transition:all .15s;}
+.rp.on .rdot{background:var(--blue);border-color:var(--blue);box-shadow:inset 0 0 0 3px #fff;}
+.cl-list{display:flex;flex-direction:column;gap:10px;}
+.cl{border:1px solid var(--bdr);border-radius:var(--rs);padding:13px 16px;cursor:pointer;display:flex;align-items:flex-start;gap:12px;transition:all .15s;}
+.cl:hover:not(.off){border-color:var(--blue);}.cl.on{border-color:var(--blue);background:#F5F8FF;}.cl.off{opacity:.45;cursor:not-allowed;pointer-events:none;}
+.cl-radio{width:17px;height:17px;border-radius:50%;border:2px solid var(--bdr2);flex-shrink:0;margin-top:2px;transition:all .15s;background:#fff;}
+.cl.on .cl-radio{background:var(--blue);border-color:var(--blue);box-shadow:inset 0 0 0 3px #fff;}
+.cl-body{flex:1;}.cl-id{font-size:13px;font-weight:700;color:var(--blue);}.cl-desc{font-size:12px;color:var(--t3);margin-top:1px;}
+.cl-tags{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap;}
+.tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:9px;display:inline-flex;align-items:center;gap:4px;}
+.tag-ok{background:var(--ok-bg);color:var(--ok);}.tag-wn{background:var(--wn-bg);color:var(--wn);}
+.tag-inf{background:var(--inf-bg);color:var(--inf);}.tag-er{background:var(--er-bg);color:var(--er);}
+.cl-bar{height:4px;background:var(--bdr);border-radius:2px;margin-top:9px;}
+.cl-fill{height:100%;border-radius:2px;}
+.cl-stat{display:flex;justify-content:space-between;font-size:11px;color:var(--t3);margin-top:4px;}
+.cl-avail{color:var(--ok);font-weight:600;}
+.cl-expiry{font-size:11px;color:var(--wn);margin-top:3px;font-weight:600;display:flex;align-items:center;gap:4px;}
+.alert{display:flex;gap:10px;padding:11px 14px;border-radius:var(--rs);font-size:13px;line-height:1.6;margin-bottom:14px;}
+.alert .ic{margin-top:1px;flex-shrink:0;}
+.alert.info{background:var(--inf-bg);color:var(--inf);border:1px solid rgba(26,79,160,.15);}
+.alert.success{background:var(--ok-bg);color:var(--ok);border:1px solid rgba(29,122,72,.15);}
+.alert.warn{background:var(--wn-bg);color:var(--wn);border:1px solid rgba(122,91,0,.15);}
+.alert.err{background:var(--er-bg);color:var(--er);border:1px solid rgba(200,16,46,.15);}
+.ul-head,.ul-row{display:grid;grid-template-columns:1.4fr .8fr 1fr;gap:10px;align-items:end;}
+.ul-head{margin-bottom:6px;}
+.ul-row-wrap{display:flex;gap:8px;align-items:flex-start;margin-bottom:12px;}
+.ul-row-wrap .ul-row{flex:1;}
+.ul-del{width:34px;height:36px;border:1px solid var(--bdr2);border-radius:var(--rs);background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--er);transition:all .15s;flex-shrink:0;}
+.ul-del:hover:not(:disabled){background:var(--er-bg);border-color:var(--er);}.ul-del:disabled{opacity:.3;cursor:not-allowed;}
+.ref-status{margin-top:5px;font-size:11px;display:flex;align-items:center;gap:4px;}
+.ref-status.found{color:var(--ok);}.ref-status.notfound{color:var(--er);}.ref-status.over{color:var(--er);}
+.ref-status.new{color:var(--inf);}
+/* ul redesign */
+.ul-head-grid{display:grid;grid-template-columns:1.4fr .8fr 1fr 34px;gap:10px;margin-bottom:6px;}
+.ul-items{display:flex;flex-direction:column;gap:0;}
+.ul-item{border:1px solid var(--bdr);border-radius:var(--rs);padding:12px 14px;margin-bottom:10px;background:#FAFBFF;}
+.ul-grid{display:grid;grid-template-columns:1.4fr .8fr 1fr 34px;gap:10px;align-items:start;margin-bottom:8px;}
+.ul-ccy-readonly{padding:9px 12px;border:1px solid var(--bdr);border-radius:var(--rs);background:#F0F2F7;color:var(--t2);font-size:14px;font-weight:600;}
+.ul-row-msgs{margin-bottom:6px;}
+.ul-row-files{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;}
+.ul-files{display:flex;flex-wrap:wrap;gap:6px;}
+.ul-file-item{display:inline-flex;align-items:center;gap:5px;background:var(--ok-bg);border:1px solid rgba(29,122,72,.2);border-radius:4px;padding:3px 8px;font-size:11px;color:var(--ok);}
+.ul-file-item span{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.btn-upload-ref{background:none;border:1px dashed var(--bdr2);color:var(--blue);padding:4px 10px;border-radius:4px;font-size:11px;font-family:inherit;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:all .15s;}
+.btn-upload-ref:hover{border-color:var(--blue);background:var(--inf-bg);}
+.ul-total{text-align:right;font-size:13px;font-weight:700;color:var(--blue);padding:8px 0;border-top:1px solid var(--bdr);margin-top:4px;}
+.date-constraints{background:var(--bg);border:1px solid var(--bdr);border-radius:var(--rs);padding:10px 14px;margin-top:8px;font-size:12px;}
+.dc-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;}
+.dc-row span:first-child{color:var(--t2);}.dc-row span:last-child{font-weight:600;color:var(--t1);}
+.dc-row.wn span:last-child{color:var(--wn);}
+.dc-row.em{border-top:1px solid var(--bdr);margin-top:4px;padding-top:6px;}
+.dc-row.em span{color:var(--blue);font-weight:700;}
+.rate-hero{border-radius:var(--rs);padding:18px 20px;margin:16px 0;border-left:4px solid var(--red);transition:background .4s;}
+.rate-hero.live{background:var(--blue);}.rate-hero.expired{background:#4A5168;}
+.rate-hero.fetching{background:#2A3A6A;animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.7;}}
+.rh-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;}
+.rh-left .rl{font-size:11px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.rh-left .rv{font-size:32px;font-weight:800;color:#fff;line-height:1;transition:color .3s;}
+.rh-left .rv.expired-txt{color:rgba(255,255,255,.35);text-decoration:line-through;}
+.rh-right{text-align:right;flex-shrink:0;}
+.rh-right div{font-size:11px;color:rgba(255,255,255,.6);margin-bottom:2px;}
+.rh-right span{color:rgba(255,255,255,.9);font-weight:600;}
+.rh-timer{margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.12);}
+.rh-timer-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
+.rh-timer-label{font-size:11px;color:rgba(255,255,255,.6);}
+.rh-timer-count{font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.5px;}
+.rh-bar-bg{height:4px;background:rgba(255,255,255,.15);border-radius:2px;}
+.rh-bar-fill{height:100%;border-radius:2px;transition:width .9s linear,background .3s;}
+.rate-expired-banner{display:none;margin-top:12px;padding:10px 14px;background:rgba(200,16,46,.25);border:1px solid rgba(200,16,46,.4);border-radius:var(--rs);align-items:center;gap:10px;font-size:13px;color:#fff;}
+.rate-expired-banner.show{display:flex;}
+.over-limit-warn{display:none;margin-top:10px;padding:10px 14px;background:rgba(200,16,46,.2);border:1px solid rgba(200,16,46,.35);border-radius:var(--rs);align-items:flex-start;gap:10px;font-size:13px;color:#fff;}
+.over-limit-warn.show{display:flex;}
+.spin{display:inline-block;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.btn-confirm-live{animation:btnPulse 2.5s ease infinite;}
+@keyframes btnPulse{0%,100%{box-shadow:0 0 0 0 rgba(200,16,46,.4);}50%{box-shadow:0 0 0 6px rgba(200,16,46,0);}}
+table.st{width:100%;border-collapse:collapse;}
+table.st td{padding:9px 0;font-size:13px;border-bottom:1px solid var(--bdr);vertical-align:middle;}
+table.st td:first-child{color:var(--t2);width:50%;}
+table.st td:last-child{font-weight:600;text-align:right;}
+table.st tr.hl td{border-bottom:none;font-size:15px;font-weight:800;color:var(--blue);padding-top:14px;}
+.btn-row{display:flex;justify-content:flex-end;gap:10px;margin-top:12px;flex-wrap:wrap;}
+.btn{padding:9px 22px;border-radius:var(--rs);font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;transition:all .15s;}
+.btn-p{background:var(--blue);color:#fff;}.btn-p:hover{background:#0041B8;}
+.btn-s{background:#fff;color:var(--blue);border:1px solid var(--blue);}.btn-s:hover{background:#F0F4FF;}
+.btn-r{background:var(--red);color:#fff;}.btn-r:hover{background:#A00C24;}
+.btn-g{background:var(--ok);color:#fff;}.btn-g:hover{filter:brightness(1.08);}
+.btn:disabled,.btn.dis{opacity:.4;cursor:not-allowed;pointer-events:none;}
+.btn:active:not(:disabled){transform:scale(.98);}
+.btn-add{background:none;border:1px dashed var(--bdr2);color:var(--t2);padding:7px 16px;border-radius:var(--rs);font-size:13px;font-family:inherit;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s;}
+.btn-add:hover{border-color:var(--blue);color:var(--blue);}
+.divider{height:1px;background:var(--bdr);margin:16px 0;}
+.amt-pill{background:#F5F8FF;border:1px solid rgba(0,48,135,.15);border-radius:var(--rs);padding:9px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.amt-pill .lbl{font-size:11px;color:var(--blue);font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
+.amt-pill .val{font-size:16px;font-weight:800;color:var(--blue);}
+.center-block{display:flex;flex-direction:column;align-items:center;text-align:center;padding:36px 24px;}
+.icon-circle{width:70px;height:70px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:16px;}
+.icon-circle.err{background:var(--er-bg);}.icon-circle.ok{background:var(--ok-bg);}
+.center-block h2{font-size:18px;font-weight:800;color:var(--blue);margin-bottom:10px;}
+.blocked-msg{background:var(--er-bg);border:1px solid rgba(200,16,46,.15);border-radius:var(--r);padding:16px 20px;max-width:460px;font-size:14px;line-height:1.8;color:var(--t1);margin-bottom:20px;text-align:left;}
+.phone-box{display:inline-flex;align-items:center;gap:8px;background:var(--inf-bg);border:1px solid rgba(26,79,160,.15);border-radius:var(--rs);padding:10px 20px;font-size:15px;font-weight:700;color:var(--blue);margin-top:10px;}
+.check-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px;width:100%;max-width:560px;}
+.check-box{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:var(--rs);}
+.check-box.ok{background:var(--ok-bg);border:1px solid rgba(29,122,72,.2);}
+.check-box strong{display:block;font-size:13px;color:var(--ok);}
+.check-box span{font-size:11px;color:var(--t2);}
+.ref-box{display:inline-block;background:var(--blue);color:#fff;border-radius:var(--rs);padding:9px 24px;font-size:17px;font-weight:800;letter-spacing:1.5px;border-left:4px solid var(--red);margin-bottom:6px;}
+.ref-sub{font-size:12px;color:var(--t3);margin-bottom:24px;}
+.success-detail{display:inline-grid;grid-template-columns:auto auto;gap:7px 28px;text-align:left;font-size:13px;background:var(--bg);border:1px solid var(--bdr);border-radius:var(--rs);padding:14px 20px;margin-bottom:24px;}
+.sd-k{color:var(--t2);}.sd-v{font-weight:700;color:var(--blue);}
+.sc{animation:fd .2s ease;}
+@keyframes fd{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+@media(max-width:640px){
+  .topbar,.subnav,.main{padding-left:14px;padding-right:14px;}
+  .wz-label{display:none;}.fg{min-width:100%;}
+  .ul-head,.ul-row{grid-template-columns:1fr 1fr;}
+  .check-grid{grid-template-columns:1fr;}.fx-services{grid-template-columns:1fr;}
+}
+
+/* STEP 2 — per-row layout fix */
+.ul-row-card{background:var(--bg);border:1px solid var(--bdr);border-radius:var(--rs);padding:12px 14px;margin-bottom:10px;}
+.ul-row-inputs{display:grid;grid-template-columns:1.4fr .8fr 1fr 34px;gap:10px;align-items:start;}
+.ul-field{display:flex;flex-direction:column;}
+.ul-field-msg{font-size:11px;min-height:16px;margin-top:4px;display:flex;align-items:center;gap:4px;}
+.ul-field-msg.found{color:var(--ok);}.ul-field-msg.notfound{color:var(--t3);font-style:italic;}
+.ul-field-msg.err{color:var(--er);}.ul-field-msg.ok{color:var(--ok);}
+.ul-row-sep{height:1px;background:var(--bdr);margin:10px 0;}
+.mini-upload{border:1.5px dashed var(--bdr2);border-radius:var(--rs);padding:10px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .15s;background:#fff;font-size:12px;color:var(--t2);}
+.mini-upload:hover{border-color:var(--blue);background:var(--inf-bg);}
+.mini-file-list{display:flex;flex-direction:column;gap:5px;margin-top:6px;}
+.mini-file{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--ok);padding:5px 10px;background:var(--ok-bg);border-radius:var(--rs);}
+.mini-file span{flex:1;}.mini-file button{background:none;border:none;color:var(--er);cursor:pointer;font-size:13px;}
+/* STEP 4 — rate breakdown */
+.rate-breakdown{background:rgba(255,255,255,.08);border-radius:var(--rs);padding:12px 16px;margin-top:14px;}
+.rb-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:12px;color:rgba(255,255,255,.75);}
+.rb-row .rb-val{font-weight:600;color:#fff;font-variant-numeric:tabular-nums;}
+.rb-row.rb-sep{border-top:1px solid rgba(255,255,255,.2);margin-top:6px;padding-top:8px;}
+.rb-row.rb-result .rb-val{color:var(--er-bg);font-size:15px;font-weight:800;}
+.rb-row.rb-result span:first-child{color:rgba(255,255,255,.9);font-size:13px;}
+.seg-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.15);color:#fff;font-size:10px;font-weight:600;padding:2px 8px;border-radius:8px;margin-left:6px;}
+/* === VALIDATION MODALS === */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;align-items:center;justify-content:center;}
+.modal-ov.show{display:flex;}
+.modal-box{background:#fff;border-radius:var(--r);padding:30px 32px;max-width:460px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.25);text-align:center;}
+.modal-box .micon{width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;}
+.modal-box .micon.err{background:var(--er-bg);color:var(--er);}
+.modal-box .micon.wn{background:var(--wn-bg);color:var(--wn);}
+.modal-box h3{font-size:17px;font-weight:800;color:var(--t1);margin-bottom:10px;}
+.modal-box .mbody{font-size:13px;color:var(--t2);line-height:1.9;margin-bottom:18px;text-align:left;}
+.modal-box .mphone{display:inline-flex;align-items:center;gap:8px;background:var(--inf-bg);border:1px solid rgba(26,79,160,.15);border-radius:var(--rs);padding:8px 18px;font-size:14px;font-weight:700;color:var(--blue);margin-bottom:18px;}
+/* === RECONFIRM MODAL === */
+.recon-pill{background:var(--wn-bg);border:1px solid rgba(122,91,0,.2);border-radius:var(--rs);padding:12px 16px;margin:12px 0;}
+.recon-pill-row{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;}
+.recon-pill-row span:first-child{color:var(--wn);}
+.recon-pill-row span:last-child{font-weight:700;color:var(--t1);font-variant-numeric:tabular-nums;}
+/* === EMP RATE TABLE === */
+.emp-rate-tbl{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px;}
+.emp-rate-tbl th{background:var(--blue);color:#fff;padding:8px 12px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;text-align:left;}
+.emp-rate-tbl td{padding:10px 12px;border-bottom:1px solid var(--bdr);}
+.emp-rate-tbl tr:last-child td{border-bottom:none;}
+.emp-rate-tbl td:nth-child(2),
+.emp-rate-tbl td:nth-child(3),
+.emp-rate-tbl th:nth-child(2),
+.emp-rate-tbl th:nth-child(3){text-align:right;}
+.emp-rate-inp{width:110px;text-align:right !important;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="t-logo" href="#">
+    <div class="t-emblem"><div class="t-em-t"><span>EXIM</span></div><div class="t-em-b"><span>BANK</span></div></div>
+    <div class="t-name"><div class="t-name-m">EXIM BANK</div><div class="t-name-s">ธนาคารเพื่อการส่งออกและนำเข้าแห่งประเทศไทย</div></div>
+  </a>
+  <div class="t-user">
+    <div class="t-av">TH</div>
+    <div><div style="font-size:13px;font-weight:600;">บจ. ไทย เอ็กซ์พอร์ต จำกัด</div><div style="font-size:10px;opacity:.5;">รหัสลูกค้า: C00124567</div></div>
+  </div>
+</div>
+<div class="subnav">
+  <a onclick="goPhase(0)">หน้าหลัก</a>
+  <span class="sep" id="bc2" style="display:none">›</span>
+  <a id="bc-fx" style="display:none" onclick="goPhase(2)">บริการ FX</a>
+  <span class="sep" id="bc3" style="display:none">›</span>
+  <a id="bc-cur" class="active" style="display:none"></a>
+  <div style="margin-left:auto;display:flex;gap:4px;align-items:center">
+    <a id="nav-emp" onclick="goPhase(6)">จัดการรายการ</a>
+    <span class="sep">|</span>
+    <a id="nav-admin" onclick="goPhase(5)">Admin</a>
+  </div>
+</div>
+<div class="main">
+  <div id="wz" class="wizard" style="display:none">
+    <div class="wz-wrap"><div class="wz-row">
+      <div class="wz-line"></div><div class="wz-done" id="wz-done"></div>
+      <div class="wz-step" id="ws1"><div class="wz-circle">1</div><div class="wz-label">เลือกรายการ</div></div>
+      <div class="wz-step" id="ws2"><div class="wz-circle">2</div><div class="wz-label">Underlying</div></div>
+      <div class="wz-step" id="ws3"><div class="wz-circle">3</div><div class="wz-label">ข้อมูลเพิ่มเติม</div></div>
+      <div class="wz-step" id="ws4"><div class="wz-circle">4</div><div class="wz-label">สรุปรายการ</div></div>
+      <div class="wz-step" id="ws5"><div class="wz-circle">5</div><div class="wz-label">ยืนยัน</div></div>
+    </div></div>
+  </div>
+  <div id="sc"></div>
+</div>
+<!-- Simulation floating panel -->
+<div id="sim-panel" style="position:fixed;bottom:20px;right:20px;z-index:900;font-family:inherit;">
+  <div id="sim-body" style="display:none;background:#1A1F2E;border-radius:8px;padding:14px 16px;width:260px;margin-bottom:8px;box-shadow:0 4px 20px rgba(0,0,0,.4);">
+    <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Simulation Config</div>
+    <div id="sim-rows"></div>
+    <div style="display:flex;gap:6px;margin-top:10px;">
+      <button onclick="simReset()" style="flex:1;background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.7);padding:6px;border-radius:4px;font-size:11px;font-family:inherit;cursor:pointer;">รีเซ็ต</button>
+      <button onclick="simSave()" style="flex:2;background:#C8102E;border:none;color:#fff;padding:6px;border-radius:4px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;">บันทึก</button>
+    </div>
+    <div id="sim-msg" style="font-size:11px;color:#4ADE80;margin-top:6px;min-height:14px;"></div>
+  </div>
+  <button onclick="toggleSim()" style="background:#1A1F2E;border:1px solid rgba(255,255,255,.15);color:#fff;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.3);display:flex;align-items:center;gap:6px;float:right;">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+    Sim
+  </button>
+</div>
+<!-- Block validation modal -->
+<div class="modal-ov" id="block-modal">
+  <div class="modal-box">
+    <div class="micon err"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+    <h3 id="bm-title"></h3>
+    <div class="mbody" id="bm-body"></div>
+    <div class="mphone"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.52 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.18 6.18l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>&nbsp;<span id="bm-phone"></span></div>
+    <div class="btn-row" style="justify-content:center;margin-top:0">
+      <button class="btn btn-s" onclick="hideBlockModal()">ปิด</button>
+    </div>
+  </div>
+</div>
+<!-- Reconfirm adjusted amount modal -->
+<div class="modal-ov" id="reconfirm-modal">
+  <div class="modal-box">
+    <div class="micon wn"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+    <h3>วงเงินไม่เพียงพอ — ลดจำนวนอัตโนมัติ</h3>
+    <div class="mbody" id="rc-body"></div>
+    <div class="recon-pill" id="rc-pill"></div>
+    <div class="btn-row" style="justify-content:center;margin-top:4px">
+      <button class="btn btn-s" onclick="hideReconfirmModal()">ยกเลิก</button>
+      <button class="btn btn-r" onclick="confirmAdjustedAmt()">ยืนยัน ดำเนินการต่อ</button>
+    </div>
+  </div>
+</div>
+<script>
+/* === SVG ICONS === */
+var SVG={
+  check:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  x:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+  arR:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>',
+  arL:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>',
+  plus:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+  trash:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>',
+  file:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
+  dl:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+  cal:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+  bld:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15"/><path d="M16 22V7a4 4 0 0 0-8 0v15"/></svg>',
+  info:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+  warn:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+  warnLg:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+  mail:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22 6 12 13 2 6"/></svg>',
+  phone:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.52 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.18 6.18l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
+  lock:'<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+  refresh:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>',
+  checkLg:'<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  clock:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+  upload:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>',
+  fx:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 16s3-2 6-2 6 4 9 4 5-2 5-2"/><path d="M2 8s3-2 6-2 6 4 9 4 5-2 5-2"/></svg>',
+  doc:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
+  globe:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+  shield:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+};
+function ic(n){return '<span class="ic">'+SVG[n]+'</span>';}
+
+/* === TIMER === */
+var TIMER_DUR=30;
+var T={interval:null,secs:TIMER_DUR,expired:false,fetching:false,lockedRate:0};
+function tcol(s){return s>10?'#4ADE80':s>5?'#FACC15':'#F87171';}
+function tfmt(s){return Math.floor(s/60)+':'+('0'+s%60).slice(-2);}
+function stopTimer(){clearInterval(T.interval);T.interval=null;}
+
+function tickUI(){
+  var cnt=document.getElementById('tmr-count'),fill=document.getElementById('tmr-fill'),
+      rv=document.getElementById('rate-rv'),btn=document.getElementById('btn-s4'),
+      xban=document.getElementById('rate-expired-banner'),hero=document.getElementById('rate-hero'),
+      owarn=document.getElementById('over-limit-warn');
+  if(!cnt)return;
+  if(T.expired){
+    cnt.textContent='0:00';cnt.style.color='#F87171';
+    if(fill){fill.style.width='0%';fill.style.background='#F87171';}
+    if(rv)rv.classList.add('expired-txt');
+    if(btn){btn.disabled=true;btn.classList.add('dis');btn.classList.remove('btn-confirm-live');}
+    if(xban)xban.classList.add('show');
+    if(hero){hero.classList.remove('live','fetching');hero.classList.add('expired');}
+    return;
+  }
+  if(rv)rv.classList.remove('expired-txt');
+  if(xban)xban.classList.remove('show');
+  if(hero){hero.classList.remove('expired','fetching');hero.classList.add('live');}
+  if(btn&&!T.fetching){btn.disabled=false;btn.classList.remove('dis');btn.classList.add('btn-confirm-live');}
+  var pct=(T.secs/TIMER_DUR)*100,col=tcol(T.secs);
+  cnt.textContent=tfmt(T.secs);cnt.style.color=col;
+  if(fill){fill.style.width=pct+'%';fill.style.background=col;}
+}
+function startTimer(rate){
+  stopTimer();
+  T.secs=TIMER_DUR;T.expired=false;T.fetching=false;T.lockedRate=rate;P.fwdRate=rate;
+  T.interval=setInterval(function(){T.secs--;if(T.secs<=0){T.secs=0;T.expired=true;stopTimer();}tickUI();},1000);
+  tickUI();
+}
+function refreshRate(){
+  if(T.fetching)return;
+  T.fetching=true;T.expired=false;
+  var hero=document.getElementById('rate-hero'),btnR=document.getElementById('btn-refresh'),btnC=document.getElementById('btn-s4');
+  if(hero){hero.classList.remove('expired');hero.classList.add('fetching');}
+  if(btnR){btnR.disabled=true;btnR.innerHTML='<span class="spin">'+SVG.refresh+'</span> กำลังขอ Rate...';}
+  if(btnC){btnC.disabled=true;btnC.classList.add('dis');}
+  setTimeout(function(){
+    var rc=calcRates(P.ccy,P.side,P.endDate);
+    var newRate=parseFloat(((rc?rc.forwardRate:0)+(Math.random()-.5)*.008).toFixed(6));
+    T.fetching=false;
+    var rv=document.getElementById('rate-rv'),hl=document.getElementById('rate-hl'),
+        thmb=document.getElementById('rate-thb'),xban=document.getElementById('rate-expired-banner'),
+        rb=document.getElementById('btn-refresh'),owarn=document.getElementById('over-limit-warn'),
+        rbFavor=document.getElementById('rb-favor'),rbFwd=document.getElementById('rb-fwd');
+    if(xban)xban.classList.remove('show');
+    if(rv){rv.classList.remove('expired-txt');rv.textContent=fmtR(newRate,P.ccy);}
+    if(hl)hl.textContent=fmtR(newRate,P.ccy)+' THB/'+P.ccy;
+    if(thmb)thmb.textContent='≈ THB '+fmt((P.adjAmt||P.amount)*newRate);
+    if(rbFavor)rbFavor.textContent=fmtR(rc?rc.favorRate:0,P.ccy);
+    if(rbFwd)rbFwd.textContent=fmtR(newRate,P.ccy);
+    if(hero){hero.classList.remove('fetching','expired');hero.classList.add('live');}
+    if(rb){rb.disabled=false;rb.innerHTML=ic('refresh')+' ขอ Rate ใหม่';}
+    var cl=getCL();
+    var usage=((P.adjAmt||P.amount)*newRate)/(CL_RATES[CL_DENOM]||36.42);
+    var over=usage>cl.avail;
+    if(owarn){
+      if(over){
+        owarn.classList.add('show');
+        var u=owarn.querySelector('.ol-usage'),a=owarn.querySelector('.ol-avail');
+        if(u)u.textContent=fmt(usage)+' USD';if(a)a.textContent=fmt(cl.avail)+' USD';
+        if(btnC){btnC.disabled=true;btnC.classList.add('dis');}
+      } else {
+        owarn.classList.remove('show');
+        if(btnC){btnC.disabled=false;btnC.classList.remove('dis');btnC.classList.add('btn-confirm-live');}
+      }
+    }
+    startTimer(newRate);
+  },1200);
+}
+
+/* === MOCK DATA === */
+var today=new Date();
+function addMo(d,m){var r=new Date(d);r.setMonth(r.getMonth()+m);return r;}
+function fmtISO(d){return d.toISOString().split('T')[0];}
+function fmtTH(s){if(!s)return'—';return new Date(s).toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});}
+var HOLIDAYS={'2025-01-01':1,'2025-02-12':1,'2025-04-06':1,'2025-04-13':1,'2025-04-14':1,'2025-04-15':1,'2025-05-01':1,'2025-05-05':1,'2025-05-12':1,'2025-06-03':1,'2025-07-10':1,'2025-07-11':1,'2025-07-28':1,'2025-08-12':1,'2025-10-13':1,'2025-10-23':1,'2025-12-05':1,'2025-12-10':1,'2025-12-31':1,'2026-01-01':1};
+function isBizDay(s){var d=new Date(s),w=d.getDay();return w!==0&&w!==6&&!HOLIDAYS[s];}
+function nextBiz(s){var d=new Date(s);d.setDate(d.getDate()+1);while(!isBizDay(fmtISO(d)))d.setDate(d.getDate()+1);return fmtISO(d);}
+function dayLabel(s){var d=new Date(s),w=d.getDay();if(w===0)return'วันอาทิตย์';if(w===6)return'วันเสาร์';if(HOLIDAYS[s])return'วันหยุดธนาคาร';return'';}
+/* Reference DB */
+var REF_DB={'INV-2024-0012':{ccy:'USD',total:500000,used:200000,desc:'Invoice สินค้าอุตสาหกรรม'},'INV-2024-0018':{ccy:'USD',total:800000,used:0,desc:'Invoice ส่งออกอาหาร'},'LC-2024-0003':{ccy:'USD',total:1200000,used:400000,desc:'Letter of Credit นำเข้า'},'PO-2024-0031':{ccy:'EUR',total:300000,used:100000,desc:'Purchase Order EU'},'INV-2024-0025':{ccy:'CNY',total:2000000,used:1800000,desc:'Invoice ส่งออก CNY'}};
+function lookupRef(no){if(!no)return null;return REF_DB[no.trim().toUpperCase()]||null;}
+var BOOKINGS=[
+  {ref:'FWD-2026-100001',ccy:'USD',amt:500000,rate:36.4200,maturity:'2026-09-01',clId:'CL-2024-001',side:'sell',
+   ul:[{ref:'INV-2024-0012',ccy:'USD',amt:300000},{ref:'INV-2024-0018',ccy:'USD',amt:200000}],ulHistory:[]},
+  {ref:'FWD-2026-100002',ccy:'EUR',amt:200000,rate:39.6800,maturity:'2026-07-15',clId:'CL-2024-002',side:'buy',
+   ul:[{ref:'PO-2024-0031',ccy:'EUR',amt:200000}],ulHistory:[]},
+  {ref:'FWD-2026-100003',ccy:'USD',amt:1000000,rate:36.1500,maturity:'2026-08-30',clId:'CL-2024-001',side:'buy',
+   ul:[{ref:'LC-2024-0003',ccy:'USD',amt:800000},{ref:'NEW-REF-001',ccy:'USD',amt:200000}],ulHistory:[]},
+];
+var ACTIVE_ADJUST=null;
+/* Customer segment & spread */
+var RTS=new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+/* Customer segment → spread */
+var SEGS={
+  S1:{name:'Premier Corporate',spread:0.0010},
+  S2:{name:'VIP',              spread:0.0030},
+  S3:{name:'SME Corporate',    spread:0.0050},
+  S4:{name:'Standard',         spread:0.0080},
+};
+var CUST_SEG='S2'; /* mock: ลูกค้า Large Corporate */
+var M={
+  hasOverdue:false,hasSuspense:false,hasSanction:false,
+  cls:[
+    {id:'CL-2024-001',desc:'วงเงิน FX สกุลหลัก',ccys:['USD','EUR','GBP','JPY','CNY','SGD'],lim:5000000,used:1200000,needUL:false,active:true,expiry:null,clRate:36.42},
+    {id:'CL-2024-002',desc:'วงเงิน FX พร้อม Underlying',ccys:['USD','EUR','CNY'],lim:3000000,used:2800000,needUL:true,active:true,expiry:fmtISO(addMo(today,4)),clRate:36.42},
+    {id:'CL-2024-003',desc:'วงเงิน Trade Finance',ccys:['USD','SGD'],lim:2000000,used:2000000,needUL:false,active:false,expiry:fmtISO(addMo(today,8)),clRate:36.42},
+  ],
+  rates:{
+    USD:{spot:36.42,buy:36.20,sell:36.64,sw:{1:-.08,2:-.16,3:-.23,4:-.31,5:-.39,6:-.46}},
+    EUR:{spot:39.68,buy:39.40,sell:39.96,sw:{1:-.05,2:-.11,3:-.17,4:-.24,5:-.30,6:-.37}},
+    GBP:{spot:46.12,buy:45.80,sell:46.44,sw:{1:-.10,2:-.21,3:-.31,4:-.42,5:-.52,6:-.63}},
+    JPY:{spot:.2438,buy:.2420,sell:.2456,sw:{1:-.0012,2:-.0024,3:-.0036,4:-.0048,5:-.006,6:-.0072}},
+    CNY:{spot:5.02,buy:4.98,sell:5.06,sw:{1:-.02,2:-.04,3:-.06,4:-.08,5:-.10,6:-.12}},
+    SGD:{spot:27.15,buy:26.95,sell:27.35,sw:{1:-.03,2:-.07,3:-.10,4:-.14,5:-.17,6:-.21}},
+  },
+  ccys:['USD','EUR','GBP','JPY','CNY','SGD'],
+  cname:{USD:'ดอลลาร์สหรัฐ',EUR:'ยูโร',GBP:'ปอนด์สเตอร์ลิง',JPY:'เยนญี่ปุ่น',CNY:'หยวนจีน',SGD:'ดอลลาร์สิงคโปร์'},
+};
+
+/* อัตราวงเงิน — set โดย eximbank รายเดือน (ไม่ใช่ mid rate) */
+var CL_RATES={USD:36.42,EUR:39.90,GBP:46.00,JPY:0.24,CNY:5.02,SGD:27.15};
+var CL_RATES_UPDATED='มิ.ย. 2569';
+var CL_DENOM='USD';
+/* อัตรา spot เริ่มต้น สำหรับ reset simulation */
+var ORIG_SPOT={};
+M.ccys.forEach(function(c){ORIG_SPOT[c]=M.rates[c].spot;});
+var ORIG_CL_RATE_USD=CL_RATES['USD'];
+
+/* === STATE === */
+/* ul item: {ref, ccy, amt, files:[]} */
+var P={phase:0,tcOk:false,step:1,side:'',ccy:'',amount:0,clId:'',ul:[{ref:'',ccy:'',amt:'',files:[]}],adjAmt:0,endDate:'',usage:'',okP:false,fwdRate:0,refNo:'',midRateTs:''};
+function fmt(n,d){d=d||2;return Number(n).toLocaleString('th-TH',{minimumFractionDigits:d,maximumFractionDigits:d});}
+function fmtR(n,c){return Number(n).toFixed(c==='JPY'?6:4);}
+function getCL(){return M.cls.find(function(c){return c.id===P.clId;});}
+
+/* Rate calculation: Favor Rate = Counter Rate ± Spread; Forward Rate = Favor Rate + Swap Points */
+function calcRates(ccy,side,date){
+  var r=M.rates[ccy];if(!r||!date)return null;
+  var ms=Math.round(((new Date(date)-today)/30/24/3600/1000));
+  var m=Math.max(1,Math.min(6,ms||1));
+  var swapPts=r.sw[m]||0;
+  var seg=SEGS[CUST_SEG];
+  var spread=seg?seg.spread:0.03;
+  var counterRate=r.spot;
+  /* Sell (export) = customer sells FCY → bank pays lower; Buy (import) = customer buys FCY → bank charges more */
+  var favorRate=side==='buy'?counterRate+spread:counterRate-spread;
+  var fwdRt=favorRate+swapPts;
+  var days=Math.round((new Date(date)-today)/86400000);
+  return{counterRate:counterRate,spread:spread,favorRate:favorRate,swapPoints:swapPts,
+         forwardRate:fwdRt,tenor:m,segName:seg?seg.name:'—',days:days};
+}
+function fwdRate(ccy,side,date){var c=calcRates(ccy,side,date);return c?c.forwardRate:0;}
+/* สูตร: FCY × mid_rate_FCY = THB; THB / อัตราวงเงิน_USD = USD */
+function calcUsageMid(amt,ccy,cl){if(!amt||!ccy||!cl)return 0;return(amt*(M.rates[ccy]?M.rates[ccy].spot:1))/(CL_RATES[CL_DENOM]||36.42);}
+function calcUsageFwd(amt,fr,cl){if(!amt||!fr||!cl)return 0;return(amt*fr)/(CL_RATES[CL_DENOM]||36.42);}
+function allCLs(){
+  return M.cls.map(function(cl){
+    var avail=cl.lim-cl.used,usage=calcUsageMid(P.amount,P.ccy,cl);
+    var st='ok';
+    if(!cl.active)st='full';
+    else if(P.ccy&&cl.ccys.indexOf(P.ccy)<0)st='ccy';
+    else if(P.amount>0&&usage>avail)st='insuf';
+    return Object.assign({},cl,{avail:avail,usage:usage,st:st});
+  });
+}
+function minDate(){return fmtISO(new Date(today.getTime()+86400000));}
+function maxDate(){
+  var sixMo=addMo(today,6),cl=getCL();
+  if(cl&&cl.expiry){var e=new Date(cl.expiry);return fmtISO(e<sixMo?e:sixMo);}
+  return fmtISO(sixMo);
+}
+
+/* === BREADCRUMB + WIZARD === */
+function updateBC(){
+  var labels={1:'เงื่อนไขการให้บริการ',2:'บริการ FX',4:'จอง Forward Contract'};
+  function show(id,v){var e=document.getElementById(id);if(e)e.style.display=v?'':'none';}
+  var inWiz=P.phase>=1&&P.phase<=4;
+  show('bc2',P.phase>1&&inWiz);show('bc-fx',P.phase>1&&inWiz);show('bc3',P.phase===4);
+  var bc=document.getElementById('bc-cur');
+  if(bc){bc.style.display=(P.phase===4)?'':'none';bc.textContent=labels[P.phase]||'';}
+  var na=document.getElementById('nav-admin'),ne=document.getElementById('nav-emp');
+  if(na)na.className=P.phase===5?'active':'';
+  if(ne)ne.className=P.phase===6?'active':'';
+}
+function renderWZ(){
+  var wz=document.getElementById('wz');
+  wz.style.display=(P.phase===4)?'block':'none';
+  if(P.phase!==4)return;
+  var pct=[0,0,20,40,60,80,100][P.step]||0;
+  document.getElementById('wz-done').style.width=pct+'%';
+  for(var i=1;i<=5;i++){
+    var el=document.getElementById('ws'+i);
+    el.className='wz-step'+(P.step>i?' done':P.step===i?' active':'');
+    el.querySelector('.wz-circle').innerHTML=P.step>i?SVG.check:i;
+  }
+}
+function goPhase(p){P.phase=p;if(p===4)P.step=1;render();}
+
+/* === PHASE RENDERS === */
+function hList(){
+  var svcs=[
+    {icon:'globe',color:'blue',name:'โอนเงินต่างประเทศ',desc:'โอนเงินออก / รับโอนเงินจากต่างประเทศ',go:false},
+    {icon:'fx',color:'red',name:'บริการ FX',desc:'ซื้อขายและจองอัตราแลกเปลี่ยนล่วงหน้า',go:true,featured:true},
+    {icon:'shield',color:'green',name:'Letter of Credit',desc:'เปิด L/C เพื่อการนำเข้า / ส่งออก',go:false},
+    {icon:'bld',color:'blue',name:'สินเชื่อเพื่อการส่งออก',desc:'Pre/Post-Shipment Financing',go:false},
+    {icon:'doc',color:'blue',name:'Bank Guarantee',desc:'ออกหนังสือค้ำประกันธนาคาร',go:false},
+  ];
+  var cards=svcs.map(function(s){
+    return '<div class="svc-card'+(s.featured?' featured':'')+'" onclick="'+(s.go?"P.phase=1;render()":"alert('บริการนี้อยู่ระหว่างพัฒนา')")+'">'+
+      '<div class="svc-icon '+s.color+'">'+ic(s.icon)+'</div>'+
+      '<div><div class="svc-name">'+s.name+'</div><div class="svc-desc">'+s.desc+'</div></div>'+
+      (s.featured?'<div class="svc-badge">'+ic('arR')+' คลิกเพื่อเข้าใช้บริการ</div>':'')+
+      '</div>';
+  }).join('');
+  return '<div class="sc"><div style="font-size:20px;font-weight:700;color:var(--blue);margin-bottom:4px">บริการธนาคารออนไลน์</div>'+
+    '<div style="font-size:13px;color:var(--t3);margin-bottom:4px">เลือกบริการที่ต้องการดำเนินการ</div>'+
+    '<div class="svc-grid">'+cards+'</div></div>';
+}
+function hTC(){
+  return '<div class="sc"><div class="card">'+
+    '<div class="card-title">'+ic('doc')+' เงื่อนไขการให้บริการ FX สำหรับลูกค้านิติบุคคล</div>'+
+    '<div class="tc-box"><h4>1. คำนิยาม</h4><p>บริการ FX ของธนาคารประกอบด้วยบริการซื้อขายเงินตราต่างประเทศแบบทันที (Spot) และการจองอัตราแลกเปลี่ยนล่วงหน้า (Forward Contract) สำหรับลูกค้านิติบุคคลที่ได้รับการอนุมัติวงเงิน</p>'+
+    '<h4>2. เงื่อนไขการใช้บริการ</h4><p>ลูกค้าต้องไม่มีรายการค้างชำระ และไม่ถูกระงับการทำธุรกรรมตามระเบียบข้อบังคับที่เกี่ยวข้อง ณ วันที่ทำรายการ</p>'+
+    '<h4>3. อัตราแลกเปลี่ยน</h4><p>Forward Rate = Favor Rate + Swap Points โดย Favor Rate = Counter Rate ± Spread ตาม Segment ของลูกค้า อัตราที่แสดงเป็น Indicative Rate เท่านั้น</p>'+
+    '<h4>4. Forward Contract</h4><p>การจอง Forward Contract เป็นการผูกพันทางกฎหมาย ลูกค้ามีภาระต้องปฏิบัติตามสัญญาตามวันและอัตราที่ตกลง</p>'+
+    '<h4>5. เอกสาร Underlying</h4><p>สำหรับวงเงินที่กำหนด ลูกค้าต้องระบุ Reference เอกสาร Underlying พร้อมแนบเอกสารประกอบ มูลค่า Forward Contract ต้องไม่เกินมูลค่า Underlying คงเหลือ</p>'+
+    '<h4>6. หลักเกณฑ์ ธปท.</h4><p>ธุรกรรมต้องไม่เกี่ยวข้องกับทองคำหรือการเก็งกำไรค่าเงินโดยไม่มีธุรกิจรองรับ ตามหลักเกณฑ์ที่ธนาคารแห่งประเทศไทยกำหนด</p></div>'+
+    '<label class="tc-accept" style="margin-bottom:18px"><input type="checkbox" id="chk-tc" '+(P.tcOk?'checked':'')+' style="accent-color:var(--blue)">'+
+    '<span>ข้าพเจ้าได้อ่านและยอมรับเงื่อนไขการให้บริการ FX ของธนาคารเพื่อการส่งออกและนำเข้าแห่งประเทศไทยทุกประการ</span></label>'+
+    '<div class="btn-row" style="margin-top:0"><button class="btn btn-s" onclick="goPhase(0)">'+ic('arL')+' ย้อนกลับ</button>'+
+    '<button class="btn btn-p'+(P.tcOk?'':' dis')+'" id="btn-tc-ok" '+(P.tcOk?'':'disabled')+'>ยืนยันและเข้าสู่บริการ '+ic('arR')+'</button></div></div></div>';
+}
+function hFXHome(){
+  var rr=['USD','EUR','GBP','JPY'].map(function(c){var r=M.rates[c];return '<tr><td><strong>'+c+'</strong> <span style="color:var(--t3);font-size:12px">'+M.cname[c]+'</span></td><td class="buy">'+r.buy.toFixed(4)+'</td><td class="sell">'+r.sell.toFixed(4)+'</td><td>'+r.spot.toFixed(4)+'</td></tr>';}).join('');
+  var cr=M.cls.filter(function(c){return c.active;}).map(function(cl){var pct=Math.min(100,Math.round(cl.used/cl.lim*100));return '<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="font-weight:600;color:var(--blue)">'+cl.id+'</span><span style="color:var(--t3)">'+fmt(cl.used/1e6)+'M / '+fmt(cl.lim/1e6)+'M USD</span></div><div class="cl-bar"><div class="cl-fill" style="width:'+pct+'%;background:'+(pct>90?'var(--er)':pct>70?'#E8A000':'var(--ok)')+'"></div></div><div style="display:flex;justify-content:space-between;font-size:11px;margin-top:3px"><span style="color:var(--t3)">'+(cl.needUL?'ต้องแนบ Underlying':'ไม่ต้องแนบเอกสาร')+'</span><span style="color:var(--ok);font-weight:600">คงเหลือ '+fmt((cl.lim-cl.used)/1e6)+'M USD</span></div></div>';}).join('');
+  return '<div class="sc"><div style="font-size:20px;font-weight:700;color:var(--blue);margin-bottom:4px">บริการ FX</div><div style="font-size:13px;color:var(--t3);margin-bottom:20px">สำหรับลูกค้านิติบุคคล</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">'+
+    '<div class="card" style="margin:0"><div class="card-title" style="margin-bottom:12px">'+ic('fx')+' อัตราแลกเปลี่ยนวันนี้</div><table class="rate-table"><thead><tr><th>สกุลเงิน</th><th>รับซื้อ</th><th>ขาย</th><th>Mid</th></tr></thead><tbody>'+rr+'</tbody></table><div class="rate-ts">'+ic('clock')+' Indicative ณ '+RTS+' น. · ปรับทุก 1 นาที</div></div>'+
+    '<div class="card" style="margin:0"><div class="card-title" style="margin-bottom:12px">'+ic('bld')+' วงเงิน FX ของคุณ</div>'+cr+'</div></div>'+
+    '<div class="card"><div class="card-title">'+ic('doc')+' เลือกประเภทบริการ FX</div><div class="fx-services">'+
+    '<div class="fx-svc inactive"><div class="fx-svc-name">Spot Rate Transaction</div><div class="fx-svc-desc">ซื้อ/ขายในอัตราปัจจุบัน ส่งมอบภายใน T+2</div><div style="margin-top:8px;font-size:11px;color:var(--wn);font-weight:600">● เร็วๆ นี้</div></div>'+
+    '<div class="fx-svc active" onclick="validateAndBook()"><div class="fx-svc-name">Forward Contract <span style="font-size:11px;color:var(--red);font-weight:700">● พร้อมใช้งาน</span></div><div class="fx-svc-desc">จองอัตราล่วงหน้าสูงสุด 6 เดือน ป้องกันความเสี่ยงอัตราแลกเปลี่ยน</div>'+
+    '<div style="margin-top:12px"><button class="btn btn-p" style="font-size:12px;padding:7px 16px" onclick="event.stopPropagation();validateAndBook()">จอง Forward Contract '+ic('arR')+'</button></div></div></div></div></div>';
+}
+function hCheck(){
+  var blocked=M.hasOverdue||M.hasSuspense||M.hasSanction;
+  if(blocked)return '<div class="card sc"><div class="center-block"><div class="icon-circle err">'+SVG.lock+'</div><h2>ไม่สามารถดำเนินการได้ในขณะนี้</h2><div class="blocked-msg">ขออภัย ระบบตรวจพบว่าบัญชีของท่านยังไม่สามารถดำเนินการจองได้ในขณะนี้<br><br>เพื่อดำเนินการเพิ่มเติม กรุณาติดต่อเจ้าหน้าที่ธนาคาร</div><div class="phone-box">'+ic('phone')+' ส่วนค้าและบริหารเงิน &nbsp;·&nbsp; 02-169-9999 ต่อ 2213–2216</div><button class="btn btn-s" style="margin-top:20px" onclick="goPhase(2)">'+ic('arL')+' กลับหน้า FX</button></div></div>';
+  return '<div class="card sc"><div class="center-block" style="padding:30px 24px"><div class="icon-circle ok">'+SVG.checkLg+'</div><h2>ผ่านการตรวจสอบ — พร้อมดำเนินการ</h2><p style="color:var(--t2);font-size:13px;margin-bottom:20px">บัญชีของท่านพร้อมสำหรับการจอง Forward Contract</p><div class="check-grid"><div class="check-box ok">'+ic('check')+'<div><strong>Overdue</strong><span>ไม่มีรายการค้างชำระ</span></div></div><div class="check-box ok">'+ic('check')+'<div><strong>Suspense</strong><span>ไม่มีรายการค้างชำระ</span></div></div><div class="check-box ok">'+ic('check')+'<div><strong>สถานะบัญชี</strong><span>ปกติ พร้อมทำรายการ</span></div></div></div><button class="btn btn-p" onclick="goPhase(4)">เริ่มจอง Forward Contract '+ic('arR')+'</button></div></div>';
+}
+
+/* === VALIDATION MODAL FUNCTIONS === */
+var BLOCK_CONTENT={
+  overdue:{
+    title:'มีรายการค้างชำระ (Overdue)',
+    body:'ระบบตรวจพบว่าบัญชีของท่านมีรายการที่ค้างชำระอยู่ในขณะนี้ ซึ่งเป็นเงื่อนไขที่ทำให้ไม่สามารถดำเนินการจอง Forward Contract ได้<br><br>กรุณาชำระรายการค้างชำระทั้งหมดให้เรียบร้อยก่อน หรือติดต่อเจ้าหน้าที่เพื่อตรวจสอบรายละเอียด',
+    phone:'02-169-9999 ต่อ 2220–2222 (Overdue Management)',
+  },
+  suspense:{
+    title:'พบรายการระงับ (Suspense)',
+    body:'ระบบตรวจพบรายการที่อยู่ระหว่างการตรวจสอบหรือระงับชั่วคราว (Suspense) ซึ่งส่งผลให้ไม่สามารถทำรายการใหม่ได้<br><br>กรุณาติดต่อเจ้าหน้าที่เพื่อตรวจสอบสถานะรายการและดำเนินการแก้ไขก่อนทำรายการต่อ',
+    phone:'02-169-9999 ต่อ 2213–2216 (ส่วนค้าและบริหารเงิน)',
+  },
+  account:{
+    title:'สถานะบัญชีไม่พร้อมทำรายการ',
+    body:'บัญชีของท่านอยู่ในสถานะที่ไม่สามารถทำรายการได้ในขณะนี้ อาจเนื่องจากบัญชีถูกระงับ หรืออยู่ระหว่างการตรวจสอบตามข้อกำหนดของธนาคาร<br><br>กรุณาติดต่อเจ้าหน้าที่เพื่อตรวจสอบสถานะบัญชีและดำเนินการเปิดใช้งานก่อนทำรายการ FX',
+    phone:'02-169-9999 ต่อ 2200–2205 (Compliance & Account)',
+  },
+};
+function showBlockModal(type){
+  var c=BLOCK_CONTENT[type];if(!c)return;
+  var ov=document.getElementById('block-modal');if(!ov)return;
+  document.getElementById('bm-title').textContent=c.title;
+  document.getElementById('bm-body').innerHTML=c.body;
+  document.getElementById('bm-phone').textContent=c.phone;
+  ov.classList.add('show');
+}
+function hideBlockModal(){
+  var ov=document.getElementById('block-modal');if(ov)ov.classList.remove('show');
+}
+function validateAndBook(){
+  if(M.hasOverdue){showBlockModal('overdue');return;}
+  if(M.hasSuspense){showBlockModal('suspense');return;}
+  if(M.hasSanction){showBlockModal('account');return;}
+  P.phase=4;P.step=1;render();
+}
+/* === RECONFIRM MODAL === */
+var RECONFIRM={newAmt:0,mid:0};
+function showReconfirmModal(origAmt,newAmt,mid,cl){
+  RECONFIRM={newAmt:newAmt,mid:mid,cl:cl};
+  var ov=document.getElementById('reconfirm-modal');if(!ov)return;
+  var avail=cl.lim-cl.used;
+  var clRateUSD=CL_RATES[CL_DENOM]||36.42;
+  var usageOrig=(origAmt*mid)/clRateUSD;
+  var usageNew=(newAmt*mid)/clRateUSD;
+  document.getElementById('rc-body').innerHTML=
+    'Mid Rate ล่าสุด (<strong>'+fmtR(mid,P.ccy)+' THB/'+P.ccy+'</strong>) ทำให้วงเงินที่ต้องใช้เกินจากคงเหลือ ระบบปรับลดจำนวน '+P.ccy+' ให้อัตโนมัติเพื่อให้พอดีกับวงเงินคงเหลือ';
+  document.getElementById('rc-pill').innerHTML=
+    '<div class="recon-pill-row"><span>จำนวนเดิม</span><span>'+fmt(origAmt)+' '+P.ccy+'</span></div>'+
+    '<div class="recon-pill-row" style="color:var(--er)"><span>วงเงินที่ต้องใช้ (เดิม)</span><span>'+fmt(usageOrig)+' USD</span></div>'+
+    '<div class="recon-pill-row"><span>วงเงินคงเหลือ</span><span>'+fmt(avail)+' USD</span></div>'+
+    '<div style="border-top:1px solid rgba(122,91,0,.2);margin:6px 0"></div>'+
+    '<div class="recon-pill-row" style="font-size:13px;font-weight:700"><span style="color:var(--ok)">จำนวนปรับลด</span><span>'+fmt(newAmt)+' '+P.ccy+'</span></div>'+
+    '<div class="recon-pill-row"><span>วงเงินที่ตัด (ใหม่)</span><span>'+fmt(usageNew)+' USD</span></div>';
+  ov.classList.add('show');
+}
+function hideReconfirmModal(){
+  var ov=document.getElementById('reconfirm-modal');if(ov)ov.classList.remove('show');
+}
+function confirmAdjustedAmt(){
+  P.adjAmt=RECONFIRM.newAmt;
+  P.fwdRate=T.lockedRate||P.fwdRate;
+  stopTimer();P.step=5;
+  hideReconfirmModal();
+  render();
+}
+/* === SIMULATION PANEL === */
+function toggleSim(){
+  var b=document.getElementById('sim-body');
+  if(!b)return;
+  var open=b.style.display==='block';
+  b.style.display=open?'none':'block';
+  if(!open)renderSimRows();
+}
+function renderSimRows(){
+  var el=document.getElementById('sim-rows');if(!el)return;
+  var spotRows=M.ccys.map(function(c){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'
+      +'<span style="font-size:12px;font-weight:700;color:rgba(255,255,255,.7);width:40px">'+c+'</span>'
+      +'<input class="sim-inp" data-ccy="'+c+'" type="text" value="'+fmtR(M.rates[c].spot,c)+'" '
+      +'style="flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;padding:4px 8px;border-radius:4px;font-size:12px;font-family:inherit;text-align:right;">'
+      +'</div>';
+  }).join('');
+  var flagRows=['hasOverdue','hasSuspense','hasSanction'].map(function(f){
+    var label={hasOverdue:'Overdue',hasSuspense:'Suspense',hasSanction:'Sanction'}[f];
+    return '<label style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;cursor:pointer;">'
+      +'<span style="font-size:12px;color:rgba(255,255,255,.7);">'+label+'</span>'
+      +'<input class="sim-flag-inp" type="checkbox" data-flag="'+f+'"'+(M[f]?' checked':'')+' style="width:16px;height:16px;accent-color:#C8102E;cursor:pointer;">'
+      +'</label>';
+  }).join('');
+  el.innerHTML=
+    '<div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Spot Rate</div>'
+    +spotRows
+    +'<div style="border-top:1px solid rgba(255,255,255,.15);margin:10px 0 8px;"></div>'
+    +'<div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">อัตราวงเงิน</div>'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'
+      +'<span style="font-size:12px;font-weight:700;color:rgba(255,255,255,.7);width:40px">USD</span>'
+      +'<input id="sim-cl-usd" type="text" value="'+CL_RATES['USD'].toFixed(4)+'" '
+      +'style="flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;padding:4px 8px;border-radius:4px;font-size:12px;font-family:inherit;text-align:right;">'
+    +'</div>'
+    +'<div style="border-top:1px solid rgba(255,255,255,.15);margin:0 0 8px;"></div>'
+    +'<div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Customer Flags</div>'
+    +flagRows;
+}
+function simSave(){
+  document.querySelectorAll('.sim-inp').forEach(function(inp){
+    var ccy=inp.dataset.ccy,val=parseFloat(inp.value.replace(/,/g,''));
+    if(!isNaN(val)&&val>0)M.rates[ccy].spot=val;
+  });
+  var clUsdInp=document.getElementById('sim-cl-usd');
+  if(clUsdInp){var cv=parseFloat(clUsdInp.value.replace(/,/g,''));if(!isNaN(cv)&&cv>0)CL_RATES['USD']=cv;}
+  document.querySelectorAll('.sim-flag-inp').forEach(function(inp){M[inp.dataset.flag]=inp.checked;});
+  var msg=document.getElementById('sim-msg');
+  if(msg){msg.textContent='✓ บันทึกแล้ว';setTimeout(function(){msg.textContent='';},2000);}
+}
+function simReset(){
+  M.ccys.forEach(function(c){M.rates[c].spot=ORIG_SPOT[c];});
+  CL_RATES['USD']=ORIG_CL_RATE_USD;
+  M.hasOverdue=false;M.hasSuspense=false;M.hasSanction=false;
+  renderSimRows();
+  var msg=document.getElementById('sim-msg');
+  if(msg){msg.textContent='✓ รีเซ็ตแล้ว';setTimeout(function(){msg.textContent='';},2000);}
+}
+
+function h1(){
+  if(!P.midRateTs)P.midRateTs=new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+  var cls=allCLs();
+  var clHtml=cls.map(function(cl){
+    var pct=Math.min(100,Math.round(cl.used/cl.lim*100)),barC=pct>90?'var(--er)':pct>70?'#E8A000':'var(--ok)';
+    var sel=P.clId===cl.id,can=cl.st==='ok';
+    var stTag={ok:'<span class="tag tag-ok">'+ic('check')+' วงเงินเพียงพอ</span>',full:'<span class="tag tag-er">'+ic('x')+' วงเงินเต็ม</span>',ccy:'<span class="tag tag-er">'+ic('x')+' ไม่รองรับสกุลนี้</span>',insuf:'<span class="tag tag-er">'+ic('warn')+' วงเงินไม่เพียงพอ</span>'}[cl.st]||'';
+    var ulTag=cl.needUL?'<span class="tag tag-wn">'+ic('file')+' ต้องแนบ Underlying</span>':'<span class="tag tag-inf">'+ic('check')+' ไม่ต้องแนบเอกสาร</span>';
+    var expRow=cl.expiry?'<div class="cl-expiry">'+ic('cal')+' วงเงินสิ้นสุด: '+fmtTH(cl.expiry)+'</div>':'';
+    return '<div class="cl'+(sel?' on':'')+(can?'':' off')+'" data-cl="'+cl.id+'"><div class="cl-radio"></div><div class="cl-body"><div class="cl-id">'+cl.id+'</div><div class="cl-desc">'+cl.desc+'</div>'+expRow+'<div class="cl-tags">'+stTag+ulTag+'</div><div class="cl-bar"><div class="cl-fill" style="width:'+pct+'%;background:'+barC+'"></div></div><div class="cl-stat"><span>ใช้ไป '+fmt(cl.used/1e6)+'M / '+fmt(cl.lim/1e6)+'M USD</span><span class="cl-avail">คงเหลือ '+fmt(cl.avail/1e6)+'M USD</span></div></div></div>';
+  }).join('');
+  var selCL=getCL(),ok=P.side&&P.ccy&&P.amount>0&&P.clId;
+  var allInsuf=P.ccy&&P.amount>0&&cls.every(function(c){return c.st!=='ok';});
+  /* ช่องสรุปการตัดวงเงิน */
+  var deductBox='';
+  if(P.ccy&&P.amount>0&&selCL){
+    var _mid=M.rates[P.ccy]?M.rates[P.ccy].spot:0;
+    var _usd=(_mid*P.amount)/(CL_RATES[CL_DENOM]||36.42);
+    var _avail=selCL.lim-selCL.used;
+    var _enough=_usd<=_avail;
+    deductBox='<div class="amt-pill" style="margin-top:14px;background:'+(_enough?'var(--ok-bg)':'var(--er-bg)')+';border-color:'+(_enough?'rgba(29,122,72,.2)':'rgba(200,16,46,.2)')+'"><span class="lbl" style="color:'+(_enough?'var(--ok)':'var(--er)')+'">วงเงินที่ถูกตัด (ประมาณ)</span><span class="val" style="color:'+(_enough?'var(--ok)':'var(--er)')+'">'+fmt(_usd)+' '+CL_DENOM+'</span></div>';
+  }
+  return '<div class="sc"><div class="card"><div class="card-title">'+ic('fx')+' ขั้นตอนที่ 1 — เลือกรายการจอง</div>'+
+    '<div class="row"><div class="fg full"><span class="fl">ต้องการ <span class="req">*</span></span><div class="rg">'+
+    '<label class="rp'+(P.side==='sell'?' on':'')+'"><input type="radio" name="side" value="sell"><div class="rdot"></div>ขายเงินตราต่างประเทศ (Export)</label>'+
+    '<label class="rp'+(P.side==='buy'?' on':'')+'"><input type="radio" name="side" value="buy"><div class="rdot"></div>ซื้อเงินตราต่างประเทศ (Import)</label></div></div></div>'+
+    '<div class="row"><div class="fg"><span class="fl">สกุลเงิน <span class="req">*</span></span><select id="sel-ccy"><option value="">— เลือกสกุลเงิน —</option>'+
+    M.ccys.map(function(c){return '<option value="'+c+'"'+(P.ccy===c?' selected':'')+'>'+c+' — '+M.cname[c]+'</option>';}).join('')+'</select></div>'+
+    '<div class="fg"><span class="fl">จำนวนเงิน <span class="req">*</span></span><input type="number" id="inp-amt" value="'+(P.amount||'')+'" placeholder="0.00" min="0" step="1000">'+
+    (P.ccy&&P.amount?'<p class="hint">≈ THB '+fmt(P.amount*(M.rates[P.ccy]?M.rates[P.ccy].spot:1))+'</p>':'')+
+    '</div></div></div>'+
+    '<div class="card"><div class="card-title">'+ic('bld')+' เลือกวงเงิน <span style="color:var(--red)">*</span></div>'+
+    (P.ccy&&P.amount?'<div class="alert warn">'+ic('clock')+'<div>Mid Rate ที่ใช้คำนวณ: <strong>'+(M.rates[P.ccy]?M.rates[P.ccy].spot.toFixed(4):0)+' THB/'+P.ccy+'</strong> บันทึก ณ '+P.midRateTs+' น. — ไม่มีการ refresh อัตโนมัติ</div></div>':'')+
+    (!P.ccy||!P.amount?'<div class="alert info">'+ic('info')+'<div>กรุณาเลือกสกุลเงินและระบุจำนวนเงินก่อน</div></div>':'')+
+    '<div class="cl-list">'+clHtml+'</div>'+
+    deductBox+
+    (selCL&&selCL.needUL?'<div class="alert warn" style="margin-top:12px">'+ic('file')+'<div>วงเงินที่เลือกต้องการเอกสาร <strong>Underlying</strong> ประกอบการจอง</div></div>':'')+
+    (allInsuf?'<div class="alert err" style="margin-top:12px">'+ic('warn')+'<div>ไม่มีวงเงินเพียงพอ — กรุณาลดจำนวนเงิน หรือติดต่อเจ้าหน้าที่</div></div>':'')+
+    '</div><div class="btn-row"><button class="btn btn-s" onclick="goPhase(2)">'+ic('arL')+' ย้อนกลับ</button>'+
+    '<button class="btn btn-p'+(ok?'':' dis')+'" id="btn-s1" '+(ok?'':'disabled')+'>ถัดไป '+ic('arR')+'</button></div></div>';
+}
+
+/* ── STEP 2: Underlying (per-row upload + new ref support) ── */
+function h2(){
+  var cl=getCL();
+  if(!cl||!cl.needUL){P.step=3;return h3();}
+  var total=P.ul.reduce(function(s,r){return s+(parseFloat(r.amt)||0);},0);
+  var target=P.adjAmt||P.amount;
+  /* [PENDING พี่เต๋า] ล็อกสกุลเงินทุก row ตามสกุลที่จอง */
+  P.ul.forEach(function(row){if(!row.ccy)row.ccy=P.ccy;});
+
+  var rows=P.ul.map(function(row,i){
+    var ref=lookupRef(row.ref||'');
+    var isKnown=!!ref;
+    var isNew=!!row.ref&&!ref;
+    var remaining=isKnown?ref.total-ref.used:0;
+    var amt=parseFloat(row.amt)||0;
+    var refOver=isKnown&&amt>0&&amt>remaining;
+    var refCcyMis=isKnown&&ref.ccy!==P.ccy;
+
+    /* status message */
+    var msg='';
+    if(row.ref&&isNew)
+      msg='<div class="ref-status new">'+ic('info')+' Reference ใหม่ — ไม่มีการตรวจสอบคงเหลือ</div>';
+    else if(isKnown&&refCcyMis)
+      msg='<div class="ref-status over">'+ic('warn')+' สกุลเงินไม่ตรง (Ref ใช้: '+ref.ccy+')</div>';
+    else if(isKnown&&refOver)
+      msg='<div class="ref-status over">'+ic('warn')+' เกินคงเหลือ — คงเหลือ: '+fmt(remaining)+' '+ref.ccy+'</div>';
+    else if(isKnown)
+      msg='<div class="ref-status found">'+ic('check')+' '+ref.desc+' · คงเหลือ '+fmt(remaining)+' '+ref.ccy+'</div>';
+
+    /* currency cell — [PENDING พี่เต๋า] lock to booked currency */
+    var ccyCell=isKnown
+      ?'<div class="ul-ccy-readonly">'+ref.ccy+'</div>'
+      :'<div class="ul-ccy-readonly" title="ล็อกตามสกุลเงินที่จอง [PENDING พี่เต๋า]">'+P.ccy+'</div>';
+
+    /* per-row files */
+    var fileList=(row.files||[]).map(function(f,fi){
+      return '<div class="ul-file-item">'+ic('file')
+        +'<span>'+f+'</span>'
+        +'<button data-ri="'+i+'" data-fi="'+fi+'" class="ulfile-del" style="background:none;border:none;color:var(--er);cursor:pointer;font-size:12px;padding:0 2px;">✕</button>'
+        +'</div>';
+    }).join('');
+    var addBtn='<button class="btn-upload-ref ulfile-add" data-ri="'+i+'">'
+      +ic('plus')+' เพิ่มเอกสาร'+(row.files&&row.files.length?' ('+row.files.length+'/5)':'')
+      +'</button>';
+
+    return '<div class="ul-item">'
+      +'<div class="ul-grid">'
+        +'<div><input type="text" value="'+row.ref+'" placeholder="Reference No." class="uinp" data-i="'+i+'" data-f="ref" style="text-transform:uppercase"></div>'
+        +'<div>'+ccyCell+'</div>'
+        +'<div><input type="text" inputmode="numeric" value="'+fmtAmt(row.amt)+'" placeholder="0.00" class="uinp" data-i="'+i+'" data-f="amt">'
+          +(isKnown&&!refOver&&amt>0?'<p class="hint ok" style="margin-top:4px">'+ic('check')+' คงเหลือหลังจอง '+fmt(remaining-amt)+' '+ref.ccy+'</p>':'')
+        +'</div>'
+        +'<button class="ul-del udel" data-i="'+i+'"'+(P.ul.length<=1?' disabled':'')+'>'+SVG.trash+'</button>'
+      +'</div>'
+      +(msg?'<div class="ul-row-msgs">'+msg+'</div>':'')
+      +'<div class="ul-row-files">'+(fileList?'<div class="ul-files">'+fileList+'</div>':'')+addBtn+'</div>'
+      +'</div>';
+  }).join('');
+
+  var hasErr=P.ul.some(function(row){
+    var ref=lookupRef(row.ref||'');
+    if(!row.ref||!row.ccy||!row.amt)return true;
+    if(ref&&ref.ccy!==P.ccy)return true;
+    if(ref&&parseFloat(row.amt)>(ref.total-ref.used))return true;
+    return false;
+  });
+  var insuf=total>0&&total<target;
+  var valHtml='';
+  if(insuf)valHtml='<div class="alert err">'+ic('warn')+'<div>ไม่สามารถจอง Forward Contract มากกว่า Underlying<br>'
+    +'รวม: <strong>'+fmt(total)+' '+P.ccy+'</strong> · จอง: <strong>'+fmt(target)+' '+P.ccy+'</strong></div></div>';
+  var canGo=!insuf&&!hasErr;
+
+  return '<div class="sc"><div class="card">'
+    +'<div class="card-title">'+ic('file')+' ขั้นตอนที่ 2 — เอกสาร Underlying</div>'
+    +'<div class="amt-pill"><span class="lbl">จำนวนที่ต้องการจอง</span><span class="val">'+fmt(P.adjAmt||P.amount)+' '+P.ccy+'</span></div>'
+    +'<div class="alert info">'+ic('info')+'<div>กรอก <strong>Reference No.</strong> ของ Underlying — Reference ใหม่สามารถเพิ่มได้ · Reference เดิมจะตรวจสอบคงเหลืออัตโนมัติ</div></div>'
+    +'<div class="ul-head-grid"><span class="fl">Reference No. <span class="req">*</span></span><span class="fl">สกุลเงิน <span class="req">*</span></span><span class="fl">จำนวน <span class="req">*</span></span><span></span></div>'
+    +'<div class="ul-items">'+rows+'</div>'
+    +(P.ul.length<5?'<button class="btn-add" id="btn-add-row">'+ic('plus')+' เพิ่มรายการ Underlying</button>':'')
+    +(total>0?'<div class="ul-total">รวม Underlying: '+fmt(total)+' '+P.ccy+'</div>':'')
+    +valHtml
+    +'</div><div class="btn-row">'
+    +'<button class="btn btn-s" onclick="P.step=1;render()">'+ic('arL')+' ย้อนกลับ</button>'
+    +'<button class="btn btn-p'+(canGo?'':' dis')+'" id="btn-s2" '+(canGo?'':'disabled')+'>ถัดไป '+ic('arR')+'</button>'
+    +'</div></div>';
+}
+
+function h3(){
+  var cl=getCL(),maxD=maxDate(),minD=minDate();
+  var dateErr='',dateSuggest='';
+  if(P.endDate){
+    var dl=dayLabel(P.endDate);
+    if(dl){dateErr='ไม่สามารถเลือก'+dl+'ได้';dateSuggest=nextBiz(P.endDate);}
+    else if(P.endDate>maxD){dateErr=(cl&&cl.expiry&&P.endDate>cl.expiry)?'เกินวันสิ้นสุดวงเงิน ('+fmtTH(cl.expiry)+')':'เกิน 6 เดือนจากวันนี้ ('+fmtTH(fmtISO(addMo(today,6)))+')';}
+  }
+  var fr=P.endDate&&P.ccy&&P.side&&!dateErr?fwdRate(P.ccy,P.side,P.endDate):0;
+  var days=P.endDate&&!dateErr?Math.round((new Date(P.endDate)-today)/86400000):0;
+  var ok=!dateErr&&P.endDate&&P.endDate>=minD&&P.endDate<=maxD&&P.usage&&P.okP;
+  return '<div class="sc"><div class="card"><div class="card-title">'+ic('cal')+' ขั้นตอนที่ 3 — ข้อมูลเพิ่มเติม</div>'+
+    '<div class="fg" style="margin-bottom:20px"><span class="fl">วันสิ้นสุดของสัญญา Forward Contract <span class="req">*</span></span>'+
+    '<input type="date" id="inp-date" value="'+(P.endDate||'')+'" min="'+minD+'" max="'+maxD+'">'+
+    (dateErr?'<p class="hint err">'+ic('warn')+' '+dateErr+(dateSuggest?' &nbsp;<button onclick="P.endDate=\''+dateSuggest+'\';document.getElementById(\'inp-date\').value=\''+dateSuggest+'\';render()" style="border:none;background:var(--blue);color:#fff;font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;cursor:pointer;font-family:inherit">ใช้ '+fmtTH(dateSuggest)+'</button>':'')+'</p>':'')+
+    (P.endDate&&!dateErr?'<p class="hint ok">'+ic('check')+' '+fmtTH(P.endDate)+' &nbsp;·&nbsp; <strong>'+days+' วัน</strong>'+(fr?' &nbsp;·&nbsp; Indicative Rate: '+fmtR(fr,P.ccy)+' THB/'+P.ccy:'')+'</p>':'')+
+    '<div class="date-constraints">'+
+    '<div class="dc-row"><span>วันแรกที่เลือกได้</span><span>'+fmtTH(minD)+'</span></div>'+
+    '<div class="dc-row"><span>สูงสุด (6 เดือน)</span><span>'+fmtTH(fmtISO(addMo(today,6)))+'</span></div>'+
+    (cl&&cl.expiry?'<div class="dc-row wn"><span>วันสิ้นสุดวงเงิน '+cl.id+'</span><span>'+fmtTH(cl.expiry)+'</span></div>':'')+
+    '<div class="dc-row em"><span>วันสูงสุดที่เลือกได้</span><span>'+fmtTH(maxD)+'</span></div>'+
+    '<div class="dc-row" style="margin-top:2px"><span style="color:var(--t3);font-size:11px">ไม่สามารถเลือกวันเสาร์ อาทิตย์ และวันหยุดธนาคาร</span></div></div></div>'+
+    '<div class="fg" style="margin-bottom:20px"><span class="fl">การใช้งาน Forward Contract <span class="req">*</span></span>'+
+    '<div class="rg"><label class="rp'+(P.usage==='company'?' on':'')+'"><input type="radio" name="usage" value="company"><div class="rdot"></div>ใช้สำหรับบริษัทเท่านั้น</label>'+
+    '<label class="rp'+(P.usage==='group'?' on':'')+'"><input type="radio" name="usage" value="group"><div class="rdot"></div>ใช้กับบริษัทและบริษัทในเครือ</label></div></div>'+
+    '<div class="fg"><span class="fl">ยืนยันวัตถุประสงค์ตาม ธปท. <span class="req">*</span></span>'+
+    '<div class="alert info" style="margin-bottom:12px">'+ic('info')+'<div>ตามหลักเกณฑ์ใหม่ของธนาคารแห่งประเทศไทย</div></div>'+
+    '<label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;line-height:1.7">'+
+    '<input type="checkbox" id="chk-p"'+(P.okP?' checked':'')+' style="width:16px;height:16px;margin-top:3px;accent-color:var(--blue);flex-shrink:0">'+
+    '<span>ข้าพเจ้าขอยืนยันว่าการจอง Forward Contract ครั้งนี้ <strong>ไม่เกี่ยวข้องกับธุรกรรมทองคำ</strong> หรือการเก็งกำไรค่าเงินโดยไม่มีธุรกิจรองรับ และเป็นไปตามหลักเกณฑ์ที่ธนาคารแห่งประเทศไทยกำหนด</span></label></div></div>'+
+    '<div class="btn-row"><button class="btn btn-s" onclick="P.step=(getCL()&&getCL().needUL)?2:1;render()">'+ic('arL')+' ย้อนกลับ</button>'+
+    '<button class="btn btn-p'+(ok?'':' dis')+'" id="btn-s3" '+(ok?'':'disabled')+'>ดูสรุปรายการ '+ic('arR')+'</button></div></div>';
+}
+
+/* ── STEP 4: สรุป + Rate Breakdown + Timer ── */
+function h4(){
+  var cl=getCL();
+  var isResume=T.interval&&!T.expired&&T.lockedRate;
+  var rc=calcRates(P.ccy,P.side,P.endDate)||{};
+  var fr=isResume?T.lockedRate:(rc.forwardRate||0);
+  P.fwdRate=fr;
+  var finalAmt=P.adjAmt||P.amount;
+  var usageFwd=calcUsageFwd(finalAmt,fr,cl);
+  var overLimit=usageFwd>cl.avail;
+  var initSecs=isResume?T.secs:TIMER_DUR;
+  var initExp=isResume?T.expired:false;
+  var initPct=(initSecs/TIMER_DUR)*100;
+  var initCol=initExp?'#F87171':tcol(initSecs);
+  var confirmDis=(initExp||overLimit)?'dis':'btn-confirm-live';
+  var seg=SEGS[CUST_SEG];
+  var days=rc.days||0;
+  var spSign=(rc.swapPoints||0)>=0?'+':'-';
+  var spAbs=Math.abs(rc.swapPoints||0);
+
+  /* Rate breakdown display */
+  var breakdown='<div class="rate-breakdown">'+
+    '<div class="rb-row"><span>Favor Rate</span><span class="rb-val" id="rb-favor">'+fmtR(rc.favorRate||0,P.ccy)+'</span></div>'+
+    '<div class="rb-row"><span>Swap Points &nbsp;<small style="opacity:.6">('+days+' วัน)</small></span><span class="rb-val">'+spSign+' '+fmtR(spAbs,P.ccy)+'</span></div>'+
+    '<div class="rb-row rb-sep rb-result"><span>Forward Rate</span><span class="rb-val" id="rb-fwd">'+fmtR(fr,P.ccy)+'</span></div>'+
+    '</div>';
+
+  return '<div class="sc"><div class="card"><div class="card-title">'+ic('file')+' ขั้นตอนที่ 4 — สรุปรายการ</div>'+
+    '<div class="rate-hero '+(initExp?'expired':'live')+'" id="rate-hero">'+
+    '<div class="rh-top"><div class="rh-left"><div class="rl">Forward Rate (THB / '+P.ccy+') — อัตราที่ล็อกไว้</div>'+
+    '<div class="rv '+(initExp?'expired-txt':'')+'" id="rate-rv">'+fmtR(fr,P.ccy)+'</div></div>'+
+    '<div class="rh-right"><div>Segment <span>'+seg.name+'</span></div><div>วันสิ้นสุด <span>'+fmtTH(P.endDate)+'</span></div><div>ระยะเวลา <span>'+days+' วัน</span></div></div></div>'+
+    breakdown+
+    '<div class="rh-timer" style="margin-top:12px"><div class="rh-timer-row"><span class="rh-timer-label">Rate มีผลถึง</span><span class="rh-timer-count" id="tmr-count" style="color:'+initCol+'">'+(initExp?'0:00':tfmt(initSecs))+'</span></div>'+
+    '<div class="rh-bar-bg"><div class="rh-bar-fill" id="tmr-fill" style="width:'+initPct+'%;background:'+initCol+'"></div></div></div>'+
+    '<div class="rate-expired-banner'+(initExp?' show':'')+'" id="rate-expired-banner">'+SVG.warnLg+'<div style="flex:1"><strong>Rate หมดอายุ</strong> — กรุณาขอ Rate ใหม่ก่อนยืนยัน</div>'+
+    '<button class="btn" id="btn-refresh" onclick="refreshRate()" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);padding:7px 14px;font-size:12px">'+ic('refresh')+' ขอ Rate ใหม่</button></div>'+
+    '<div class="over-limit-warn'+(overLimit?' show':'')+'" id="over-limit-warn">'+SVG.warnLg+'<div><strong>วงเงินไม่เพียงพอ</strong> — Rate ใหม่ทำให้วงเงินที่ใช้ (<span class="ol-usage">'+fmt(usageFwd)+' USD</span>) เกินวงเงินคงเหลือ (<span class="ol-avail">'+fmt(cl.avail)+' USD</span>)</div></div>'+
+    '</div>'+
+    '<table class="st">'+
+    '<tr><td>ประเภทรายการ</td><td>'+(P.side==='sell'?'ขายเงินตราต่างประเทศ (Export)':'ซื้อเงินตราต่างประเทศ (Import)')+'</td></tr>'+
+    '<tr><td>สกุลเงิน</td><td>'+P.ccy+'</td></tr>'+
+    '<tr><td>จำนวนที่จอง</td><td>'+fmt(finalAmt)+' '+P.ccy+'</td></tr>'+
+    '<tr><td>มูลค่าเทียบ THB</td><td id="rate-thb">≈ THB '+fmt(finalAmt*fr)+'</td></tr>'+
+    '<tr><td>วงเงินที่เลือก</td><td>'+P.clId+'</td></tr>'+
+    '<tr><td>Underlying</td><td>'+(cl&&cl.needUL?'มีเอกสาร Underlying':'ไม่ต้องการเอกสาร')+'</td></tr>'+
+    '<tr><td>วันสิ้นสุดสัญญา</td><td>'+fmtTH(P.endDate)+' ('+days+' วัน)</td></tr>'+
+    '<tr><td>การใช้งาน</td><td>'+(P.usage==='company'?'ใช้สำหรับบริษัทเท่านั้น':'ใช้กับบริษัทและบริษัทในเครือ')+'</td></tr>'+
+    '<tr class="hl"><td>Forward Rate</td><td id="rate-hl">'+fmtR(fr,P.ccy)+' THB/'+P.ccy+'</td></tr>'+
+    '</table></div>'+
+    '<div class="btn-row"><button class="btn btn-s" onclick="P.step=3;stopTimer();render()">'+ic('arL')+' ย้อนกลับ</button>'+
+    '<button class="btn btn-r '+confirmDis+'" id="btn-s4" '+((initExp||overLimit)?'disabled':'')+'>'+ic('check')+' ยืนยันการจอง Forward Contract</button></div></div>';
+}
+
+function h5(){
+  if(!P.refNo)P.refNo='FWD-'+new Date().getFullYear()+'-'+(Math.floor(Math.random()*9e5)+1e5);
+  var finalAmt=P.adjAmt||P.amount;
+  var days=P.endDate?Math.round((new Date(P.endDate)-today)/86400000):0;
+  return '<div class="sc"><div class="card"><div class="center-block" style="padding:40px 20px">'+
+    '<div class="icon-circle ok">'+SVG.checkLg+'</div><h2>จองสำเร็จแล้ว!</h2>'+
+    '<p style="color:var(--t2);font-size:13px;margin-bottom:16px">การจอง Forward Contract ได้รับการยืนยันเรียบร้อยแล้ว</p>'+
+    '<div class="ref-box">'+P.refNo+'</div><div class="ref-sub">เลขที่อ้างอิงการจอง</div>'+
+    '<div class="success-detail">'+
+    '<div class="sd-k">ประเภท</div><div class="sd-v">'+(P.side==='sell'?'ขาย (Export)':'ซื้อ (Import)')+'</div>'+
+    '<div class="sd-k">จำนวน</div><div class="sd-v">'+fmt(finalAmt)+' '+P.ccy+'</div>'+
+    '<div class="sd-k">Forward Rate</div><div class="sd-v">'+fmtR(P.fwdRate,P.ccy)+' THB/'+P.ccy+'</div>'+
+    '<div class="sd-k">วันสิ้นสุดสัญญา</div><div class="sd-v">'+fmtTH(P.endDate)+' ('+days+' วัน)</div>'+
+    '<div class="sd-k">วงเงินที่ใช้</div><div class="sd-v">'+P.clId+'</div>'+
+    '<div class="sd-k" style="color:var(--er)">ตัดจากวงเงิน</div><div class="sd-v" style="color:var(--er)">'+fmt((finalAmt*P.fwdRate)/(CL_RATES[CL_DENOM]||36.42))+' '+CL_DENOM+'</div>'+
+    '<div class="sd-k">วันที่จอง</div><div class="sd-v">'+new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'})+'</div>'+
+    '</div>'+
+    '<button class="btn btn-g" id="btn-dl">'+ic('dl')+' ดาวน์โหลดสัญญา Forward Contract</button>'+
+    '<p style="margin-top:16px;font-size:12px;color:var(--t3);display:flex;align-items:center;gap:5px;justify-content:center">'+ic('mail')+' ท่านจะได้รับการยืนยันทาง Email ภายใน 15 นาที</p></div></div></div>';
+}
+
+/* === HELPERS === */
+function fmtAmt(v){var n=parseFloat(String(v||'').replace(/,/g,''));return n?n.toLocaleString('th-TH',{minimumFractionDigits:0,maximumFractionDigits:2}):'';}
+
+/* === ADMIN TAB === */
+function hAdmin(){
+  var rows=Object.keys(REF_DB).map(function(k){
+    var r=REF_DB[k];
+    return '<tr>'
+      +'<td style="font-weight:700;color:var(--blue)">'+k+'</td>'
+      +'<td>'+r.desc+'</td>'
+      +'<td>'+r.ccy+'</td>'
+      +'<td style="text-align:right"><input type="text" inputmode="numeric" class="admin-total-inp" data-ref="'+k+'" value="'+fmtAmt(r.total)+'" style="width:130px;text-align:right;padding:5px 8px;font-size:12px"></td>'
+      +'<td style="text-align:right">'+fmt(r.used)+'</td>'
+      +'<td style="text-align:right;color:var(--ok);font-weight:600">'+fmt(r.total-r.used)+'</td>'
+      +'</tr>';
+  }).join('');
+  return '<div class="sc"><div class="card">'
+    +'<div class="card-title">'+ic('bld')+' Admin — กำหนด Total Underlying</div>'
+    +'<div class="alert info">'+ic('info')+'<div>กำหนด <strong>Total</strong> ของแต่ละ Underlying เพื่อใช้ตรวจสอบคงเหลือใน Step 2 · Underlying ใหม่ที่ลูกค้ากรอกมาโดยยังไม่มียอด ให้เพิ่มที่ฟอร์มด้านล่าง</div></div>'
+    +'<div style="overflow-x:auto"><table class="rate-table"><thead><tr>'
+      +'<th>Reference</th><th>คำอธิบาย</th><th>สกุล</th><th style="text-align:right">Total (แก้ไขได้)</th><th style="text-align:right">Used</th><th style="text-align:right">คงเหลือ</th>'
+    +'</tr></thead><tbody>'+rows+'</tbody></table></div>'
+    +'<div class="btn-row" style="margin-top:12px"><button class="btn btn-p" id="btn-admin-save">'+ic('check')+' บันทึก Total</button></div>'
+    +'<div id="admin-ok"></div>'
+    +'<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bdr)">'
+      +'<div class="card-title" style="border-bottom:none;padding-bottom:0;margin-bottom:12px">'+ic('plus')+' เพิ่ม Underlying ใหม่</div>'
+      +'<div class="row">'
+        +'<div class="fg"><span class="fl">Reference No.</span><input type="text" id="admin-new-ref" placeholder="เช่น INV-2024-0050" style="text-transform:uppercase"></div>'
+        +'<div class="fg"><span class="fl">คำอธิบาย</span><input type="text" id="admin-new-desc" placeholder="คำอธิบาย"></div>'
+        +'<div class="fg" style="max-width:130px"><span class="fl">สกุลเงิน</span><select id="admin-new-ccy"><option value="">— เลือก —</option>'
+          +M.ccys.map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('')+'</select></div>'
+        +'<div class="fg" style="max-width:150px"><span class="fl">Total</span><input type="text" inputmode="numeric" id="admin-new-total" placeholder="0"></div>'
+      +'</div>'
+      +'<div class="btn-row" style="margin-top:0"><button class="btn btn-s" id="btn-admin-add">'+ic('plus')+' เพิ่มรายการ</button></div>'
+    +'</div>'
+    +'<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bdr)">'
+      +'<div class="card-title" style="border-bottom:none;padding-bottom:0;margin-bottom:6px">'+ic('refresh')+' Simulation — ปรับ Spot Rate</div>'
+      +'<div class="alert warn" style="margin-bottom:12px">'+ic('warn')+'<div>ปรับ Spot Rate เพื่อจำลอง case วงเงินไม่เพียงพอใน Step 4</div></div>'
+      +'<table class="emp-rate-tbl"><thead><tr><th>สกุลเงิน</th><th>Spot Rate ปัจจุบัน</th><th>ค่าเริ่มต้น</th></tr></thead><tbody>'
+      +M.ccys.map(function(c){return '<tr><td style="font-weight:700;color:var(--blue)">'+c+'</td>'
+        +'<td><input class="sim-spot-inp" type="text" inputmode="numeric" data-ccy="'+c+'" value="'+fmtR(M.rates[c].spot,c)+'" style="width:110px;text-align:right;padding:5px 8px;font-size:13px"></td>'
+        +'<td style="color:var(--t3);font-size:12px">'+fmtR(ORIG_SPOT[c],c)+'</td></tr>';}).join('')
+      +'</tbody></table>'
+      +'<div class="btn-row" style="margin-top:10px">'
+        +'<button class="btn btn-s" id="btn-sim-reset">รีเซ็ตค่าเริ่มต้น</button>'
+        +'<button class="btn btn-p" id="btn-sim-save">'+ic('check')+' บันทึก Spot Rate</button>'
+      +'</div>'
+      +'<div id="sim-ok"></div>'
+    +'</div>'
+    +'</div></div>';
+}
+function bindAdmin(){
+  var saveBtn=document.getElementById('btn-admin-save');
+  if(saveBtn)saveBtn.addEventListener('click',function(){
+    document.querySelectorAll('.admin-total-inp').forEach(function(inp){
+      var ref=inp.dataset.ref;
+      var val=parseFloat(inp.value.replace(/,/g,''));
+      if(!isNaN(val)&&val>0&&REF_DB[ref])REF_DB[ref].total=val;
+    });
+    var ok=document.getElementById('admin-ok');
+    if(ok){ok.innerHTML='<div class="alert success" style="margin-top:10px">'+ic('check')+' <div>บันทึกเรียบร้อยแล้ว</div></div>';
+      setTimeout(function(){ok.innerHTML='';render();},1500);}
+  });
+  var addBtn=document.getElementById('btn-admin-add');
+  if(addBtn)addBtn.addEventListener('click',function(){
+    var ref=(document.getElementById('admin-new-ref').value||'').trim().toUpperCase();
+    var desc=(document.getElementById('admin-new-desc').value||'').trim();
+    var ccy=document.getElementById('admin-new-ccy').value;
+    var total=parseFloat((document.getElementById('admin-new-total').value||'').replace(/,/g,''));
+    if(!ref||!ccy||isNaN(total)||total<=0){alert('กรุณากรอก Reference, สกุลเงิน และ Total ให้ครบ');return;}
+    if(REF_DB[ref]){alert('Reference "'+ref+'" มีอยู่แล้วในระบบ');return;}
+    REF_DB[ref]={ccy:ccy,total:total,used:0,desc:desc||ref};
+    render();
+  });
+  var simSaveBtn=document.getElementById('btn-sim-save');
+  if(simSaveBtn)simSaveBtn.addEventListener('click',function(){
+    document.querySelectorAll('.sim-spot-inp').forEach(function(inp){
+      var ccy=inp.dataset.ccy,val=parseFloat(inp.value.replace(/,/g,''));
+      if(!isNaN(val)&&val>0)M.rates[ccy].spot=val;
+    });
+    var ok=document.getElementById('sim-ok');
+    if(ok){ok.innerHTML='<div class="alert success" style="margin-top:8px">'+ic('check')+' <div>บันทึกแล้ว — กลับไป Step 4 แล้วกด ยืนยันการจอง ได้เลย</div></div>';
+      setTimeout(function(){ok.innerHTML='';},2500);}
+  });
+  var simResetBtn=document.getElementById('btn-sim-reset');
+  if(simResetBtn)simResetBtn.addEventListener('click',function(){
+    M.ccys.forEach(function(c){M.rates[c].spot=ORIG_SPOT[c];});
+    render();
+  });
+}
+
+/* === EMPLOYEE ADJUSTMENT TAB === */
+function hEmployee(){
+  var html=BOOKINGS.map(function(bk,i){
+    var isEditing=ACTIVE_ADJUST&&ACTIVE_ADJUST.idx===i;
+    var editUl=isEditing?ACTIVE_ADJUST.ul:null;
+
+    var ulRows=(isEditing?editUl:bk.ul).map(function(u,j){
+      if(isEditing){
+        return '<tr>'
+          +'<td><input type="text" value="'+u.ref+'" class="emp-ul-inp" data-i="'+i+'" data-j="'+j+'" data-f="ref" style="text-transform:uppercase"></td>'
+          +'<td><select class="emp-ul-inp" data-i="'+i+'" data-j="'+j+'" data-f="ccy">'
+            +M.ccys.map(function(c){return '<option value="'+c+'"'+(u.ccy===c?' selected':'')+'>'+c+'</option>';}).join('')
+          +'</select></td>'
+          +'<td><input type="text" inputmode="numeric" value="'+fmtAmt(u.amt)+'" class="emp-ul-inp" data-i="'+i+'" data-j="'+j+'" data-f="amt"></td>'
+        +'</tr>';
+      }
+      return '<tr>'
+        +'<td style="font-weight:600">'+u.ref+'</td>'
+        +'<td>'+u.ccy+'</td>'
+        +'<td style="text-align:right">'+fmt(u.amt)+'</td>'
+      +'</tr>';
+    }).join('');
+
+    var histRows=bk.ulHistory.map(function(h){
+      return '<tr style="background:var(--inf-bg)">'
+        +'<td colspan="3" style="font-size:11px;color:var(--inf)">'+new Date(h.ts).toLocaleString('th-TH')+' &nbsp;·&nbsp; '+h.by+'</td>'
+      +'</tr>'
+      +'<tr style="background:var(--inf-bg)">'
+        +'<td colspan="2" style="font-size:11px;color:var(--t2)">'+h.note+'</td>'
+        +'<td style="font-size:11px;font-style:italic;color:var(--t3)">'+h.reason+'</td>'
+      +'</tr>';
+    }).join('');
+
+    var editCtrl=isEditing
+      ?'<tr><td colspan="3" style="padding-top:10px">'
+          +'<span class="fl">เหตุผลในการแก้ไข <span class="req">*</span></span>'
+          +'<input type="text" id="adj-reason" placeholder="ระบุเหตุผล..." style="margin-bottom:8px">'
+          +'<div class="btn-row" style="margin-top:0">'
+            +'<button class="btn btn-s adj-cancel" data-i="'+i+'">ยกเลิก</button>'
+            +'<button class="btn btn-r adj-submit" data-i="'+i+'">'+ic('check')+' บันทึกการแก้ไข</button>'
+          +'</div>'
+        +'</td></tr>'
+      :'';
+
+    return '<div style="border:1px solid var(--bdr);border-radius:var(--rs);padding:14px 16px;margin-bottom:14px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
+        +'<div><strong style="color:var(--blue)">'+bk.ref+'</strong>'
+          +'<span style="font-size:12px;color:var(--t3);margin-left:10px">'+(bk.side==='sell'?'ขาย':'ซื้อ')+' '+fmt(bk.amt)+' '+bk.ccy+' · สิ้นสุด '+fmtTH(bk.maturity)+'</span>'
+        +'</div>'
+        +(!isEditing?'<button class="btn btn-s adj-edit" data-i="'+i+'" style="font-size:12px;padding:5px 12px">แก้ไข Underlying</button>':'')
+      +'</div>'
+      +'<table class="rate-table"><thead><tr><th>Reference No.</th><th>สกุล</th><th style="text-align:right">จำนวน</th></tr></thead>'
+      +'<tbody>'+ulRows+editCtrl+histRows+'</tbody></table>'
+    +'</div>';
+  }).join('');
+
+  var rateRows=Object.keys(CL_RATES).map(function(ccy){
+    return '<tr>'
+      +'<td style="font-weight:700;color:var(--blue)">'+ccy+'</td>'
+      +'<td><input class="emp-rate-inp" type="text" inputmode="numeric" data-ccy="'+ccy+'" value="'+fmtR(CL_RATES[ccy],'USD')+'" style="width:110px;text-align:right;padding:5px 8px;font-size:13px"></td>'
+      +'<td style="color:var(--t3);font-size:12px">'+CL_RATES_UPDATED+'</td>'
+      +'</tr>';
+  }).join('');
+  var rateSection='<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bdr)">'
+    +'<div class="card-title" style="border-bottom:none;padding-bottom:0;margin-bottom:6px">'+ic('bld')+' ตั้งอัตราวงเงิน (อัตราการตัดวงเงิน) by Currency</div>'
+    +'<div class="alert warn" style="margin-bottom:12px">'+ic('warn')+'<div>อัตราวงเงิน <strong>ไม่ใช่</strong> Mid Rate ตลาด — เป็นอัตราที่ EXIM Bank กำหนดเพื่อคำนวณการตัดวงเงิน อัพเดตได้รายเดือน</div></div>'
+    +'<div class="alert info" style="margin-bottom:12px">'+ic('info')+'<div>สูตร: FCY × Mid Rate FCY = THB &nbsp;·&nbsp; THB ÷ <strong>อัตราวงเงิน USD</strong> = USD ที่ตัดจากวงเงิน</div></div>'
+    +'<table class="emp-rate-tbl"><thead><tr><th>สกุลเงิน</th><th>อัตราวงเงิน (THB/CCY)</th><th>ปรับปรุงล่าสุด</th></tr></thead>'
+    +'<tbody>'+rateRows+'</tbody></table>'
+    +'<div class="btn-row" style="margin-top:12px">'
+      +'<button class="btn btn-p" id="btn-save-rates">'+ic('check')+' บันทึกอัตราวงเงิน</button>'
+    +'</div>'
+    +'<div id="emp-rate-ok"></div>'
+    +'</div>';
+
+  return '<div class="sc"><div class="card">'
+    +'<div class="card-title">'+ic('file')+' จัดการรายการจอง FX</div>'
+    +'<div class="alert info">'+ic('info')+'<div>สำหรับ Employee — แก้ไขข้อมูล Underlying ที่แนบมากับรายการจอง · ทุกการแก้ไขถูกบันทึกประวัติและเหตุผล</div></div>'
+    +html
+    +rateSection
+    +'</div></div>';
+}
+function bindEmployee(){
+  document.querySelectorAll('.adj-edit').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var i=+this.dataset.i;
+      ACTIVE_ADJUST={idx:i,ul:BOOKINGS[i].ul.map(function(u){return{ref:u.ref,ccy:u.ccy,amt:u.amt};})};
+      render();
+    });
+  });
+  document.querySelectorAll('.adj-cancel').forEach(function(btn){
+    btn.addEventListener('click',function(){ACTIVE_ADJUST=null;render();});
+  });
+  document.querySelectorAll('.emp-ul-inp').forEach(function(inp){
+    inp.addEventListener('change',function(){
+      var j=+this.dataset.j,f=this.dataset.f;
+      if(f==='amt')ACTIVE_ADJUST.ul[j].amt=parseFloat(this.value.replace(/,/g,''))||0;
+      else ACTIVE_ADJUST.ul[j][f]=this.value.trim().toUpperCase===undefined?this.value:this.value.trim().toUpperCase();
+    });
+  });
+  document.querySelectorAll('.adj-submit').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var i=+this.dataset.i;
+      var reason=(document.getElementById('adj-reason').value||'').trim();
+      if(!reason){alert('กรุณาระบุเหตุผลในการแก้ไข');return;}
+      var bk=BOOKINGS[i];
+      var changes=ACTIVE_ADJUST.ul.map(function(nu,j){
+        var ou=bk.ul[j]||{};
+        var parts=[];
+        if(nu.ref!==ou.ref)parts.push('Ref: '+ou.ref+' → '+nu.ref);
+        if(nu.ccy!==ou.ccy)parts.push('CCY: '+ou.ccy+' → '+nu.ccy);
+        if(nu.amt!==ou.amt)parts.push('จำนวน: '+fmt(ou.amt)+' → '+fmt(nu.amt));
+        return parts.length?'Row '+(j+1)+': '+parts.join(', '):'';
+      }).filter(Boolean).join(' | ');
+      bk.ulHistory.push({ts:Date.now(),by:'Employee',note:changes||'ไม่มีการเปลี่ยนแปลง',reason:reason});
+      bk.ul=ACTIVE_ADJUST.ul;
+      ACTIVE_ADJUST=null;render();
+    });
+  });
+  var saveRatesBtn=document.getElementById('btn-save-rates');
+  if(saveRatesBtn)saveRatesBtn.addEventListener('click',function(){
+    var hasErr=false;
+    document.querySelectorAll('.emp-rate-inp').forEach(function(inp){
+      var ccy=inp.dataset.ccy,val=parseFloat(inp.value.replace(/,/g,''));
+      if(!isNaN(val)&&val>0&&CL_RATES.hasOwnProperty(ccy)){CL_RATES[ccy]=val;}
+      else{hasErr=true;}
+    });
+    if(hasErr){alert('กรุณากรอกอัตราวงเงินให้ถูกต้อง');return;}
+    var d=new Date(),thMonths=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    CL_RATES_UPDATED=thMonths[d.getMonth()]+' '+(d.getFullYear()+543);
+    var ok=document.getElementById('emp-rate-ok');
+    if(ok){ok.innerHTML='<div class="alert success" style="margin-top:10px">'+ic('check')+' <div>บันทึกอัตราวงเงินเรียบร้อยแล้ว — มีผลทันที</div></div>';
+      setTimeout(function(){ok.innerHTML='';render();},1800);}
+  });
+}
+
+/* === RENDER === */
+function render(){
+  updateBC();renderWZ();
+  var el=document.getElementById('sc');
+  var goS4=(P.phase===4&&P.step===4);
+  if(!goS4)stopTimer();
+  if(P.phase===0){el.innerHTML=hList();return;}
+  if(P.phase===1){el.innerHTML=hTC();bindTC();return;}
+  if(P.phase===2){el.innerHTML=hFXHome();return;}
+  if(P.phase===5){el.innerHTML=hAdmin();bindAdmin();return;}
+  if(P.phase===6){el.innerHTML=hEmployee();bindEmployee();return;}
+  var hMap=[null,h1,h2,h3,h4,h5];
+  el.innerHTML=(hMap[P.step]||h1)();
+  bindWizard();
+  if(goS4&&!T.interval)startTimer(fwdRate(P.ccy,P.side,P.endDate));
+}
+function bindTC(){
+  var chk=document.getElementById('chk-tc');
+  if(chk)chk.addEventListener('change',function(e){P.tcOk=e.target.checked;render();});
+  var btn=document.getElementById('btn-tc-ok');
+  if(btn)btn.addEventListener('click',function(){if(P.tcOk){P.phase=2;render();}});
+}
+function bindWizard(){
+  function $(id){return document.getElementById(id);}
+  function on(id,e,fn){var el=$(id);if(el)el.addEventListener(e,fn);}
+  function all(s,e,fn){document.querySelectorAll(s).forEach(function(x){x.addEventListener(e,fn);});}
+  all('input[name="side"]','change',function(e){P.side=e.target.value;P.clId='';render();});
+  on('sel-ccy','change',function(e){P.ccy=e.target.value;P.clId='';P.midRateTs='';render();});
+  on('inp-amt','change',function(e){P.amount=parseFloat(e.target.value)||0;P.clId='';render();});
+  all('.cl:not(.off)','click',function(e){var id=e.currentTarget.dataset.cl;if(id){P.clId=id;P.endDate='';render();}});
+  on('btn-s1','click',function(){var cl=getCL();P.step=(cl&&cl.needUL)?2:3;render();});
+  /* Step 2 — underlying inputs */
+  all('.uinp','change',function(e){
+    var i=+e.target.dataset.i,f=e.target.dataset.f;
+    if(f==='amt'){P.ul[i][f]=e.target.value.replace(/,/g,'');}
+    else{P.ul[i][f]=e.target.value;}
+    if(f==='ref'){
+      var ref=lookupRef(e.target.value);
+      if(ref){P.ul[i].ccy=ref.ccy;}
+      else if(e.target.value){P.ul[i].ccy=P.ccy;}
+      if(!e.target.value){P.ul[i].ccy=P.ccy;}
+      P.ul[i].amt='';
+    }
+    render();
+  });
+  all('.udel','click',function(e){var i=+e.currentTarget.dataset.i;if(P.ul.length>1){P.ul.splice(i,1);render();}});
+  on('btn-add-row','click',function(){if(P.ul.length<5){P.ul.push({ref:'',ccy:'',amt:'',files:[]});render();}});
+  /* per-row file add */
+  all('.ulfile-add','click',function(e){
+    var ri=+e.currentTarget.dataset.ri;
+    if(!P.ul[ri].files)P.ul[ri].files=[];
+    if(P.ul[ri].files.length>=5)return;
+    var names=['Invoice.pdf','Contract.pdf','LC_Document.pdf','PO_Reference.pdf','Shipping_Bill.pdf'];
+    P.ul[ri].files.push(names[P.ul[ri].files.length]||('Doc_'+(P.ul[ri].files.length+1)+'.pdf'));
+    render();
+  });
+  all('.ulfile-del','click',function(e){
+    var ri=+e.currentTarget.dataset.ri, fi=+e.currentTarget.dataset.fi;
+    if(P.ul[ri]&&P.ul[ri].files)P.ul[ri].files.splice(fi,1);
+    render();
+  });
+  on('btn-s2','click',function(){P.step=3;render();});
+  /* Per-row file upload */
+  all('.upl-zone','click',function(e){
+    var i=+e.currentTarget.dataset.i;
+    if(!P.ul[i].files)P.ul[i].files=[];
+    if(P.ul[i].files.length>=5)return;
+    var r=P.ul[i];
+    var prefix=r.ref?r.ref.toUpperCase():'REF'+i;
+    var mockNames=['Invoice.pdf','Contract.pdf','PO_Confirmation.pdf','LG_Document.pdf','LC_Copy.pdf'];
+    P.ul[i].files.push(prefix+'_'+mockNames[P.ul[i].files.length]);
+    render();
+  });
+  all('.udel-file','click',function(e){
+    e.stopPropagation();
+    var i=+e.currentTarget.dataset.i,fi=+e.currentTarget.dataset.fi;
+    P.ul[i].files.splice(fi,1);render();
+  });
+  /* Step 3 */
+  on('inp-date','change',function(e){
+    var v=e.target.value,mx=maxDate(),mn=minDate();
+    P.endDate=v>mx?mx:v<mn?mn:v;
+    if(P.endDate!==v)e.target.value=P.endDate;
+    render();
+  });
+  all('input[name="usage"]','change',function(e){P.usage=e.target.value;render();});
+  on('chk-p','change',function(e){P.okP=e.target.checked;render();});
+  on('btn-s3','click',function(){P.step=4;render();});
+  /* Step 4 */
+  on('btn-s4','click',function(){
+    if(T.expired)return;
+    var cl=getCL();
+    var spot=M.rates[P.ccy]?M.rates[P.ccy].spot:0;
+    var currentMid=spot*(1+(Math.random()>0.5?0.005:0));
+    var finalAmt=P.adjAmt||P.amount;
+    var avail=cl.lim-cl.used;
+    var clRateUSD=CL_RATES[CL_DENOM]||36.42;
+    var usdNeed=currentMid>0?(finalAmt*currentMid)/clRateUSD:0;
+    if(usdNeed<=avail){
+      P.fwdRate=T.lockedRate||P.fwdRate;stopTimer();P.step=5;render();
+    } else {
+      var maxAmt=Math.floor((avail*clRateUSD)/currentMid);
+      showReconfirmModal(finalAmt,maxAmt,currentMid,cl);
+    }
+  });
+  /* Step 5 */
+  on('btn-dl','click',function(){
+    var a=document.createElement('a');
+    a.download='ForwardContract_'+P.refNo+'.txt';
+    var days=P.endDate?Math.round((new Date(P.endDate)-today)/86400000):0;
+    a.href='data:text/plain;charset=utf-8,'+encodeURIComponent('EXIM BANK — Forward Contract\nRef: '+P.refNo+'\nCCY: '+P.ccy+'\nAmt: '+fmt(P.adjAmt||P.amount)+'\nRate: '+fmtR(P.fwdRate,P.ccy)+'\nMaturity: '+fmtTH(P.endDate)+' ('+days+' days)\n[Mock]');
+    a.click();
+  });
+}
+render();
+
+</script>
+</body>
+</html>
