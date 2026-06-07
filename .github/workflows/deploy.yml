@@ -16,6 +16,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Create Pages project (if not exists)
+        run: npx wrangler pages project create fx-epic4 || true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: 710091e64c44d183a1a5465456d88ff1
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1
         with:
