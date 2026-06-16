@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EXIM BANK — บริการ FX</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/dayjs.min.js"></script>
 <style>
 :root{
   --red:#C8102E;--blue:#003087;
@@ -293,14 +294,22 @@ table.st tr.hl td{border-bottom:none;font-size:15px;font-weight:800;color:var(--
 </div>
 <!-- Simulation floating panel -->
 <div id="sim-panel" style="position:fixed;bottom:20px;right:20px;z-index:900;font-family:inherit;">
-  <div id="sim-body" style="display:none;background:#1A1F2E;border-radius:8px;padding:14px 16px;width:260px;margin-bottom:8px;box-shadow:0 4px 20px rgba(0,0,0,.4);">
-    <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Simulation Config</div>
-    <div id="sim-rows"></div>
-    <div style="display:flex;gap:6px;margin-top:10px;">
-      <button onclick="simReset()" style="flex:1;background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.7);padding:6px;border-radius:4px;font-size:11px;font-family:inherit;cursor:pointer;">รีเซ็ต</button>
-      <button onclick="simSave()" style="flex:2;background:#C8102E;border:none;color:#fff;padding:6px;border-radius:4px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;">บันทึก</button>
+  <div id="sim-body" style="display:none;background:#1A1F2E;border-radius:8px;padding:14px 16px;width:300px;margin-bottom:8px;box-shadow:0 4px 20px rgba(0,0,0,.4);">
+    <div style="display:flex;gap:3px;background:rgba(255,255,255,.08);border-radius:5px;padding:3px;margin-bottom:12px;">
+      <button id="sim-tab-cfg" onclick="switchSimTab('config')" style="flex:1;background:rgba(255,255,255,.18);border:none;color:#fff;padding:4px 0;border-radius:3px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;">Config</button>
+      <button id="sim-tab-fwd" onclick="switchSimTab('fwd')" style="flex:1;background:transparent;border:none;color:rgba(255,255,255,.45);padding:4px 0;border-radius:3px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;">Forward</button>
     </div>
-    <div id="sim-msg" style="font-size:11px;color:#4ADE80;margin-top:6px;min-height:14px;"></div>
+    <div id="sim-config-panel">
+      <div id="sim-rows"></div>
+      <div style="display:flex;gap:6px;margin-top:10px;">
+        <button onclick="simReset()" style="flex:1;background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.7);padding:6px;border-radius:4px;font-size:11px;font-family:inherit;cursor:pointer;">รีเซ็ต</button>
+        <button onclick="simSave()" style="flex:2;background:#C8102E;border:none;color:#fff;padding:6px;border-radius:4px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;">บันทึก</button>
+      </div>
+      <div id="sim-msg" style="font-size:11px;color:#4ADE80;margin-top:6px;min-height:14px;"></div>
+    </div>
+    <div id="sim-fwd-panel" style="display:none;">
+      <div id="sim-fwd-rows"></div>
+    </div>
   </div>
   <button onclick="toggleSim()" style="background:#1A1F2E;border:1px solid rgba(255,255,255,.15);color:#fff;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.3);display:flex;align-items:center;gap:6px;float:right;">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
@@ -441,13 +450,16 @@ function refreshRate(){
 
 /* === MOCK DATA === */
 var today=new Date();
-function addMo(d,m){var r=new Date(d);r.setMonth(r.getMonth()+m);return r;}
-function fmtISO(d){return d.toISOString().split('T')[0];}
-function fmtTH(s){if(!s)return'—';return new Date(s).toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});}
+function addMo(d,m){var s=d instanceof Date?fmtISO(d):String(d);var r=dayjs(s).add(m,'month');return new Date(r.year(),r.month(),r.date());}
+function fmtISO(d){var m=String(d.getMonth()+1).padStart(2,'0'),dy=String(d.getDate()).padStart(2,'0');return d.getFullYear()+'-'+m+'-'+dy;}
+function fmtTH(s){if(!s)return'—';var dj=dayjs(s);return new Date(dj.year(),dj.month(),dj.date()).toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});}
 var HOLIDAYS={'2025-01-01':1,'2025-02-12':1,'2025-04-06':1,'2025-04-13':1,'2025-04-14':1,'2025-04-15':1,'2025-05-01':1,'2025-05-05':1,'2025-05-12':1,'2025-06-03':1,'2025-07-10':1,'2025-07-11':1,'2025-07-28':1,'2025-08-12':1,'2025-10-13':1,'2025-10-23':1,'2025-12-05':1,'2025-12-10':1,'2025-12-31':1,'2026-01-01':1};
-function isBizDay(s){var d=new Date(s),w=d.getDay();return w!==0&&w!==6&&!HOLIDAYS[s];}
-function nextBiz(s){var d=new Date(s);d.setDate(d.getDate()+1);while(!isBizDay(fmtISO(d)))d.setDate(d.getDate()+1);return fmtISO(d);}
-function dayLabel(s){var d=new Date(s),w=d.getDay();if(w===0)return'วันอาทิตย์';if(w===6)return'วันเสาร์';if(HOLIDAYS[s])return'วันหยุดธนาคาร';return'';}
+function isBizDay(s){var w=dayjs(s).day();return w!==0&&w!==6&&!HOLIDAYS[s];}
+function nextBiz(s){var d=dayjs(s).add(1,'day');while(!isBizDay(d.format('YYYY-MM-DD')))d=d.add(1,'day');return d.format('YYYY-MM-DD');}
+function adjBizDay(s){return isBizDay(s)?s:nextBiz(s);}
+function addBizDays(s,n){var d=dayjs(s),c=0;while(c<n){d=d.add(1,'day');if(isBizDay(d.format('YYYY-MM-DD')))c++;}return d.format('YYYY-MM-DD');}
+function addDay(s){return dayjs(s).add(1,'day').format('YYYY-MM-DD');}
+function dayLabel(s){var w=dayjs(s).day();if(w===0)return'วันอาทิตย์';if(w===6)return'วันเสาร์';if(HOLIDAYS[s])return'วันหยุดธนาคาร';return'';}
 /* Reference DB */
 var REF_DB={'INV-2024-0012':{ccy:'USD',total:500000,used:200000,desc:'Invoice สินค้าอุตสาหกรรม'},'INV-2024-0018':{ccy:'USD',total:800000,used:0,desc:'Invoice ส่งออกอาหาร'},'LC-2024-0003':{ccy:'USD',total:1200000,used:400000,desc:'Letter of Credit นำเข้า'},'PO-2024-0031':{ccy:'EUR',total:300000,used:100000,desc:'Purchase Order EU'},'INV-2024-0025':{ccy:'CNY',total:2000000,used:1800000,desc:'Invoice ส่งออก CNY'}};
 function lookupRef(no){if(!no)return null;return REF_DB[no.trim().toUpperCase()]||null;}
@@ -686,12 +698,32 @@ function confirmAdjustedAmt(){
   render();
 }
 /* === SIMULATION PANEL === */
+var SIM_TAB='config';
 function toggleSim(){
   var b=document.getElementById('sim-body');
   if(!b)return;
   var open=b.style.display==='block';
   b.style.display=open?'none':'block';
-  if(!open)renderSimRows();
+  if(!open){if(SIM_TAB==='fwd')renderFwdSim();else renderSimRows();}
+}
+function switchSimTab(tab){
+  SIM_TAB=tab;
+  var cp=document.getElementById('sim-config-panel');
+  var fp=document.getElementById('sim-fwd-panel');
+  var bc=document.getElementById('sim-tab-cfg');
+  var bf=document.getElementById('sim-tab-fwd');
+  if(!cp||!fp)return;
+  var onSt='flex:1;background:rgba(255,255,255,.18);border:none;color:#fff;padding:4px 0;border-radius:3px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;';
+  var offSt='flex:1;background:transparent;border:none;color:rgba(255,255,255,.45);padding:4px 0;border-radius:3px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;';
+  if(tab==='config'){
+    cp.style.display='';fp.style.display='none';
+    if(bc)bc.style.cssText=onSt;if(bf)bf.style.cssText=offSt;
+    renderSimRows();
+  } else {
+    cp.style.display='none';fp.style.display='';
+    if(bc)bc.style.cssText=offSt;if(bf)bf.style.cssText=onSt;
+    renderFwdSim();
+  }
 }
 function renderSimRows(){
   var el=document.getElementById('sim-rows');if(!el)return;
@@ -741,6 +773,150 @@ function simReset(){
   renderSimRows();
   var msg=document.getElementById('sim-msg');
   if(msg){msg.textContent='✓ รีเซ็ตแล้ว';setTimeout(function(){msg.textContent='';},2000);}
+}
+var _fwdSim={ccy:'USD',side:'sell',startDate:'',endDate:'',showHol:false};
+function toggleHolMgr(){_fwdSim.showHol=!_fwdSim.showHol;renderFwdSim();}
+function addHol(){var inp=document.getElementById('sim-hol-inp');if(!inp||!inp.value)return;HOLIDAYS[inp.value]=1;renderFwdSim();}
+function removeHol(s){delete HOLIDAYS[s];renderFwdSim();}
+function renderFwdSim(){
+  var el=document.getElementById('sim-fwd-rows');if(!el)return;
+  var ccy=_fwdSim.ccy,side=_fwdSim.side;
+  var isJPY=ccy==='JPY';
+  var inp=_fwdSim.startDate,inpE=_fwdSim.endDate;
+
+  var adjStart='',spotVal='',adjEnd='',maxMo=0,rawSpotStart='';
+  if(inp&&inpE){
+    rawSpotStart=addDay(inp);                    /* raw T+1 (1 day after inp) */
+    adjStart=adjBizDay(rawSpotStart);            /* T+1 adjusted → Spot row start */
+    spotVal=addBizDays(adjBizDay(inp),2);        /* T+2 from T+0 → Spot row end */
+    adjEnd=adjBizDay(inpE);
+    var ms=Math.round((new Date(adjEnd)-new Date(spotVal))/30/24/3600/1000);
+    maxMo=Math.max(0,Math.min(6,ms));
+  }
+
+  var seg=SEGS[CUST_SEG],sprd=seg?seg.spread:0.03,cr=M.rates[ccy]?M.rates[ccy].spot:0;
+  var dp=isJPY?6:4;
+  function fmtR(v){return Number(v).toFixed(dp);}
+  function fmtD(s){var dj=dayjs(s);return new Date(dj.year(),dj.month(),dj.date()).toLocaleDateString('th-TH',{day:'numeric',month:'short'});}
+  /* show adj date; if raw≠adj, show original in amber below */
+  function dateCell(raw,adj){
+    var shifted=raw&&adj&&raw!==adj;
+    return '<div>'+fmtD(adj)+(shifted?'<div style="font-size:9px;color:#F59E0B;line-height:1.3;">(จาก '+fmtD(raw)+')</div>':'')+'</div>';
+  }
+  /* rate + formula hint */
+  function rateCell(rate,formula){
+    return '<div style="color:#4ADE80;font-weight:700;">'+fmtR(rate)+'</div>'
+          +'<div style="color:rgba(255,255,255,.28);font-size:9px;line-height:1.4;margin-top:1px;">'+formula+'</div>';
+  }
+  var spSign=side==='buy'?'+':'−';
+
+  var tbl='';
+  if(adjStart&&maxMo>0){
+    var thSt='color:rgba(255,255,255,.4);font-weight:600;padding:4px 5px;border-bottom:1px solid rgba(255,255,255,.15);font-size:10px;';
+    var tdSt='padding:5px 5px;border-bottom:1px solid rgba(255,255,255,.07);vertical-align:top;font-size:11px;';
+
+    /* Spot row: start=adjStart (T+0), end=spotVal (T+2)
+       rawSpotVal = T+2 from raw inp (before biz-day adjustment) — shown as original if shifted */
+    var rawSpotVal=inp?addBizDays(inp,2):spotVal;
+    var rows=
+      '<tr style="background:rgba(255,255,255,.04);">'
+      +'<td style="'+tdSt+'color:#F59E0B;font-weight:700;">Spot</td>'
+      +'<td style="'+tdSt+'color:rgba(255,255,255,.8);">'+dateCell(rawSpotStart,adjStart)+'</td>'
+      +'<td style="'+tdSt+'color:rgba(255,255,255,.8);">'+dateCell(rawSpotVal,spotVal)+'</td>'
+      +'<td style="'+tdSt+'text-align:right;">'+rateCell(cr,'Spot Rate')+'</td>'
+      +'</tr>';
+
+    var prevEnd=spotVal;
+    for(var m=1;m<=maxMo;m++){
+      /* start = next biz day strictly after prevEnd */
+      var rawRowStart=addDay(prevEnd);
+      var rowStart=adjBizDay(rawRowStart);
+      /* end = spotVal + m months → adjBizDay; last month uses adjEnd */
+      var rawMonthEnd=dayjs(spotVal).add(m,'month').format('YYYY-MM-DD');
+      var rowEnd=m===maxMo?adjEnd:adjBizDay(rawMonthEnd);
+      var rawRowEnd=m===maxMo?inpE:rawMonthEnd;
+
+      var sw=M.rates[ccy]?M.rates[ccy].sw[m]||0:0;
+      var swSign=sw>=0?'+':'−';
+      var fwdRt=(side==='buy'?cr+sprd:cr-sprd)+sw;
+      var fwdFormula='Counter + Fwd Pts['+m+'] ('+swSign+Math.abs(sw).toFixed(dp)+')';
+
+      rows+='<tr>'
+        +'<td style="'+tdSt+'color:rgba(255,255,255,.5);">'+m+'</td>'
+        +'<td style="'+tdSt+'color:rgba(255,255,255,.8);">'+dateCell(rawRowStart,rowStart)+'</td>'
+        +'<td style="'+tdSt+'color:rgba(255,255,255,.8);">'+dateCell(rawRowEnd,rowEnd)+'</td>'
+        +'<td style="'+tdSt+'text-align:right;">'+rateCell(fwdRt,fwdFormula)+'</td>'
+        +'</tr>';
+      prevEnd=rowEnd;
+    }
+    tbl='<table style="width:100%;border-collapse:collapse;margin-top:10px;">'
+      +'<tr>'
+      +'<th style="text-align:left;'+thSt+'">งวด</th>'
+      +'<th style="text-align:left;'+thSt+'">วันเริ่มต้น</th>'
+      +'<th style="text-align:left;'+thSt+'">วันสิ้นสุด</th>'
+      +'<th style="text-align:right;'+thSt+'">Rate</th>'
+      +'</tr>'+rows+'</table>'
+      +'<div style="margin-top:8px;font-size:9px;color:rgba(255,255,255,.28);line-height:1.7;">'
+        +'Counter Rate = Spot '+spSign+' Spread ('+CUST_SEG+' '+sprd.toFixed(4)+')<br>'
+        +'Forward Rate = Counter Rate + Fwd Pts[m]<br>'
+        +'Fwd Pts ('+ccy+'): '+(function(){return[1,2,3,4,5,6].map(function(i){var v=M.rates[ccy]?M.rates[ccy].sw[i]||0:0;return'M'+i+'='+(v>=0?'+':'')+v.toFixed(dp);}).join(' ');})()
+      +'</div>';
+  } else if(inp&&inpE){
+    tbl='<div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:8px;text-align:center;">ช่วงเวลาต้องมากกว่า 1 เดือน</div>';
+  } else {
+    tbl='<div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:8px;text-align:center;">กรุณากรอกวันเริ่มต้นและวันสิ้นสุดสัญญา</div>';
+  }
+
+  var inpSt='width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;padding:5px 8px;border-radius:4px;font-size:12px;font-family:inherit;';
+  var lblSt='font-size:10px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;';
+  var ccyOpts=M.ccys.map(function(c){return'<option value="'+c+'"'+(ccy===c?' selected':'')+'>'+c+'</option>';}).join('');
+  el.innerHTML=
+    '<div style="margin-bottom:8px;">'
+      +'<div style="'+lblSt+'">สกุลเงิน</div>'
+      +'<select onchange="_fwdSim.ccy=this.value;renderFwdSim();" style="'+inpSt+'">'+ccyOpts+'</select>'
+    +'</div>'
+    +'<div style="margin-bottom:8px;">'
+      +'<div style="'+lblSt+'">ทิศทาง</div>'
+      +'<div style="display:flex;gap:6px;">'
+        +'<button onclick="_fwdSim.side=\'buy\';renderFwdSim();" style="flex:1;padding:5px;border-radius:4px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;border:1px solid rgba(255,255,255,.15);'+(side==='buy'?'background:#1D7A48;color:#fff;':'background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);')+'">ซื้อ</button>'
+        +'<button onclick="_fwdSim.side=\'sell\';renderFwdSim();" style="flex:1;padding:5px;border-radius:4px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;border:1px solid rgba(255,255,255,.15);'+(side==='sell'?'background:#C8102E;color:#fff;':'background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);')+'">ขาย</button>'
+      +'</div>'
+    +'</div>'
+    +'<div style="display:flex;gap:8px;margin-bottom:6px;">'
+      +'<div style="flex:1;">'
+        +'<div style="'+lblSt+'">วันทำรายการจอง</div>'
+        +'<input type="date" value="'+inp+'" onchange="_fwdSim.startDate=this.value;renderFwdSim();" style="'+inpSt+'">'
+      +'</div>'
+      +'<div style="flex:1;">'
+        +'<div style="'+lblSt+'">วันสิ้นสุดสัญญา</div>'
+        +'<input type="date" value="'+inpE+'" onchange="_fwdSim.endDate=this.value;renderFwdSim();" style="'+inpSt+'">'
+      +'</div>'
+    +'</div>'
+    +(adjStart?'<div style="font-size:10px;color:rgba(255,255,255,.3);margin-bottom:4px;">Spot value date (T+2): '+fmtD(spotVal)+'</div>':'')
+    +tbl
+    /* Holiday manager */
+    +'<div style="margin-top:10px;border-top:1px solid rgba(255,255,255,.1);padding-top:8px;">'
+      +'<div onclick="toggleHolMgr()" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:10px;font-weight:700;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.5px;">'
+        +'<span>วันหยุด ('+Object.keys(HOLIDAYS).length+')</span>'
+        +'<span>'+(_fwdSim.showHol?'▴':'▾')+'</span>'
+      +'</div>'
+      +(_fwdSim.showHol?
+        '<div style="margin-top:8px;">'
+          +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:2px 4px;margin-bottom:6px;">'
+            +Object.keys(HOLIDAYS).sort().map(function(s){
+              return '<div style="display:flex;justify-content:space-between;align-items:center;">'
+                +'<span style="font-size:11px;color:rgba(255,255,255,.6);">'+fmtD(s)+'</span>'
+                +'<button onclick="removeHol(\''+s+'\')" style="background:none;border:none;color:rgba(255,255,255,.4);font-size:12px;cursor:pointer;padding:0 4px;line-height:1;">✕</button>'
+                +'</div>';
+            }).join('')
+          +'</div>'
+          +'<div style="display:flex;gap:4px;">'
+            +'<input type="date" id="sim-hol-inp" style="flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;padding:4px 6px;border-radius:3px;font-size:11px;font-family:inherit;">'
+            +'<button onclick="addHol()" style="background:#1D7A48;border:none;color:#fff;padding:4px 10px;border-radius:3px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;">+</button>'
+          +'</div>'
+        +'</div>'
+      :'')
+    +'</div>';
 }
 
 function h1(){
