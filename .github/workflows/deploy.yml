@@ -13,6 +13,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Stamp current date/time
+        run: |
+          BE_YEAR=$(( $(TZ='Asia/Bangkok' date +'%Y') + 543 ))
+          DT="$BE_YEAR-$(TZ='Asia/Bangkok' date +'%m-%d %H:%M')"
+          echo "Stamping: $DT"
+          sed -i "s/{current-date-time}/$DT/g" "exim_forward_contract (1).html"
+
       - name: Create Pages project (if not exists)
         run: |
           RESPONSE=$(curl -s -o /tmp/cf_create.json -w "%{http_code}" -X POST \

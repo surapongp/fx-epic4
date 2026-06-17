@@ -263,6 +263,7 @@ table.st tr.hl td{border-bottom:none;font-size:15px;font-weight:800;color:var(--
     <div class="t-name"><div class="t-name-m">EXIM BANK</div><div class="t-name-s">ธนาคารเพื่อการส่งออกและนำเข้าแห่งประเทศไทย</div></div>
   </a>
   <div class="t-user">
+    <div style="font-size:11px;opacity:.5;margin-right:4px;">last update : {current-date-time}</div>
     <div class="t-av">TH</div>
     <div><div style="font-size:13px;font-weight:600;">บจ. ไทย เอ็กซ์พอร์ต จำกัด</div><div style="font-size:10px;opacity:.5;">รหัสลูกค้า: C00124567</div></div>
   </div>
@@ -277,6 +278,8 @@ table.st tr.hl td{border-bottom:none;font-size:15px;font-weight:800;color:var(--
     <a id="nav-emp" onclick="goPhase(6)">จัดการรายการ</a>
     <span class="sep">|</span>
     <a id="nav-admin" onclick="goPhase(5)">Admin</a>
+    <span class="sep">|</span>
+    <a id="nav-fwddoc" onclick="goPhase(7)">กลไก Forward</a>
   </div>
 </div>
 <div class="main">
@@ -457,6 +460,8 @@ var HOLIDAYS={'2025-01-01':1,'2025-02-12':1,'2025-04-06':1,'2025-04-13':1,'2025-
 function isBizDay(s){var w=dayjs(s).day();return w!==0&&w!==6&&!HOLIDAYS[s];}
 function nextBiz(s){var d=dayjs(s).add(1,'day');while(!isBizDay(d.format('YYYY-MM-DD')))d=d.add(1,'day');return d.format('YYYY-MM-DD');}
 function adjBizDay(s){return isBizDay(s)?s:nextBiz(s);}
+function prevBiz(s){var d=dayjs(s).subtract(1,'day');while(!isBizDay(d.format('YYYY-MM-DD')))d=d.subtract(1,'day');return d.format('YYYY-MM-DD');}
+function adjModFol(s){if(isBizDay(s))return s;var nb=nextBiz(s);return dayjs(nb).month()!==dayjs(s).month()?prevBiz(s):nb;}
 function addBizDays(s,n){var d=dayjs(s),c=0;while(c<n){d=d.add(1,'day');if(isBizDay(d.format('YYYY-MM-DD')))c++;}return d.format('YYYY-MM-DD');}
 function addDay(s){return dayjs(s).add(1,'day').format('YYYY-MM-DD');}
 function dayLabel(s){var w=dayjs(s).day();if(w===0)return'วันอาทิตย์';if(w===6)return'วันเสาร์';if(HOLIDAYS[s])return'วันหยุดธนาคาร';return'';}
@@ -562,9 +567,10 @@ function updateBC(){
   show('bc2',P.phase>1&&inWiz);show('bc-fx',P.phase>1&&inWiz);show('bc3',P.phase===4);
   var bc=document.getElementById('bc-cur');
   if(bc){bc.style.display=(P.phase===4)?'':'none';bc.textContent=labels[P.phase]||'';}
-  var na=document.getElementById('nav-admin'),ne=document.getElementById('nav-emp');
+  var na=document.getElementById('nav-admin'),ne=document.getElementById('nav-emp'),nf=document.getElementById('nav-fwddoc');
   if(na)na.className=P.phase===5?'active':'';
   if(ne)ne.className=P.phase===6?'active':'';
+  if(nf)nf.className=P.phase===7?'active':'';
 }
 function renderWZ(){
   var wz=document.getElementById('wz');
@@ -774,7 +780,15 @@ function simReset(){
   var msg=document.getElementById('sim-msg');
   if(msg){msg.textContent='✓ รีเซ็ตแล้ว';setTimeout(function(){msg.textContent='';},2000);}
 }
-var _fwdSim={ccy:'USD',side:'sell',startDate:'',endDate:'',showHol:false};
+var _fwdSim={ccy:'USD',side:'sell',startDate:'',endDate:'',showHol:false,endErr:''};
+function setFwdEnd(v){
+  _fwdSim.endErr='';
+  if(v){
+    if(!isBizDay(v)){_fwdSim.endErr='ห้ามเลือกวันหยุด (เสาร์-อาทิตย์ หรือวันหยุดที่กำหนด)';renderFwdSim();return;}
+    if(_fwdSim.startDate&&v>dayjs(_fwdSim.startDate).add(6,'month').format('YYYY-MM-DD')){_fwdSim.endErr='วันสิ้นสุดต้องไม่เกิน 6 เดือนจากวันทำรายการจอง';renderFwdSim();return;}
+  }
+  _fwdSim.endDate=v;renderFwdSim();
+}
 function toggleHolMgr(){_fwdSim.showHol=!_fwdSim.showHol;renderFwdSim();}
 function addHol(){var inp=document.getElementById('sim-hol-inp');if(!inp||!inp.value)return;HOLIDAYS[inp.value]=1;renderFwdSim();}
 function removeHol(s){delete HOLIDAYS[s];renderFwdSim();}
@@ -798,17 +812,19 @@ function renderFwdSim(){
   var dp=isJPY?6:4;
   function fmtR(v){return Number(v).toFixed(dp);}
   function fmtD(s){var dj=dayjs(s);return new Date(dj.year(),dj.month(),dj.date()).toLocaleDateString('th-TH',{day:'numeric',month:'short'});}
-  /* show adj date; if raw≠adj, show original in amber below */
+  /* show adj date; if raw≠adj, show original below — amber=ขยับวันออก, cyan=ขยับวันเข้า */
   function dateCell(raw,adj){
     var shifted=raw&&adj&&raw!==adj;
-    return '<div>'+fmtD(adj)+(shifted?'<div style="font-size:9px;color:#F59E0B;line-height:1.3;">(จาก '+fmtD(raw)+')</div>':'')+'</div>';
+    if(!shifted)return '<div>'+fmtD(adj)+'</div>';
+    var out=new Date(adj)>new Date(raw);
+    var c=out?'#F59E0B':'#38BDF8';
+    return '<div>'+fmtD(adj)+'<div style="font-size:9px;color:'+c+';line-height:1.3;">(จาก '+fmtD(raw)+')</div></div>';
   }
   /* rate + formula hint */
   function rateCell(rate,formula){
     return '<div style="color:#4ADE80;font-weight:700;">'+fmtR(rate)+'</div>'
           +'<div style="color:rgba(255,255,255,.28);font-size:9px;line-height:1.4;margin-top:1px;">'+formula+'</div>';
   }
-  var spSign=side==='buy'?'+':'−';
 
   var tbl='';
   if(adjStart&&maxMo>0){
@@ -831,15 +847,15 @@ function renderFwdSim(){
       /* start = next biz day strictly after prevEnd */
       var rawRowStart=addDay(prevEnd);
       var rowStart=adjBizDay(rawRowStart);
-      /* end = spotVal + m months → adjBizDay; last month uses adjEnd */
+      /* end = spotVal + m months → Modified Following; last month uses adjEnd */
       var rawMonthEnd=dayjs(spotVal).add(m,'month').format('YYYY-MM-DD');
-      var rowEnd=m===maxMo?adjEnd:adjBizDay(rawMonthEnd);
+      var rowEnd=m===maxMo?adjEnd:adjModFol(rawMonthEnd);
       var rawRowEnd=m===maxMo?inpE:rawMonthEnd;
 
       var sw=M.rates[ccy]?M.rates[ccy].sw[m]||0:0;
       var swSign=sw>=0?'+':'−';
-      var fwdRt=(side==='buy'?cr+sprd:cr-sprd)+sw;
-      var fwdFormula='Counter + Fwd Pts['+m+'] ('+swSign+Math.abs(sw).toFixed(dp)+')';
+      var fwdRt=cr+sw;
+      var fwdFormula='Spot + Fwd Pts['+m+'] ('+swSign+Math.abs(sw).toFixed(dp)+')';
 
       rows+='<tr>'
         +'<td style="'+tdSt+'color:rgba(255,255,255,.5);">'+m+'</td>'
@@ -851,14 +867,13 @@ function renderFwdSim(){
     }
     tbl='<table style="width:100%;border-collapse:collapse;margin-top:10px;">'
       +'<tr>'
-      +'<th style="text-align:left;'+thSt+'">งวด</th>'
+      +'<th style="text-align:left;'+thSt+'">tenor</th>'
       +'<th style="text-align:left;'+thSt+'">วันเริ่มต้น</th>'
       +'<th style="text-align:left;'+thSt+'">วันสิ้นสุด</th>'
       +'<th style="text-align:right;'+thSt+'">Rate</th>'
       +'</tr>'+rows+'</table>'
       +'<div style="margin-top:8px;font-size:9px;color:rgba(255,255,255,.28);line-height:1.7;">'
-        +'Counter Rate = Spot '+spSign+' Spread ('+CUST_SEG+' '+sprd.toFixed(4)+')<br>'
-        +'Forward Rate = Counter Rate + Fwd Pts[m]<br>'
+        +'Forward Rate = Spot Rate + Fwd Pts[m]<br>'
         +'Fwd Pts ('+ccy+'): '+(function(){return[1,2,3,4,5,6].map(function(i){var v=M.rates[ccy]?M.rates[ccy].sw[i]||0:0;return'M'+i+'='+(v>=0?'+':'')+v.toFixed(dp);}).join(' ');})()
       +'</div>';
   } else if(inp&&inpE){
@@ -889,9 +904,10 @@ function renderFwdSim(){
       +'</div>'
       +'<div style="flex:1;">'
         +'<div style="'+lblSt+'">วันสิ้นสุดสัญญา</div>'
-        +'<input type="date" value="'+inpE+'" onchange="_fwdSim.endDate=this.value;renderFwdSim();" style="'+inpSt+'">'
+        +'<input type="date" value="'+inpE+'"'+(inp?' min="'+inp+'" max="'+dayjs(inp).add(6,'month').format('YYYY-MM-DD')+'"':'')+' onchange="setFwdEnd(this.value)" style="'+inpSt+'">'
       +'</div>'
     +'</div>'
+    +(_fwdSim.endErr?'<div style="font-size:10px;color:#F87171;margin-bottom:6px;">'+_fwdSim.endErr+'</div>':'')
     +(adjStart?'<div style="font-size:10px;color:rgba(255,255,255,.3);margin-bottom:4px;">Spot value date (T+2): '+fmtD(spotVal)+'</div>':'')
     +tbl
     /* Holiday manager */
@@ -1208,6 +1224,69 @@ function hAdmin(){
     +'</div>'
     +'</div></div>';
 }
+
+/* === FORWARD MECHANISM DOC TAB === */
+function hFwdDoc(){
+  var step=function(n,title,body){
+    return '<div style="display:flex;gap:12px;margin-bottom:14px;align-items:flex-start">'
+      +'<div style="flex:0 0 28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:13px">'+n+'</div>'
+      +'<div style="flex:1"><div style="font-weight:700;margin-bottom:3px">'+title+'</div>'
+      +'<div style="color:var(--t2);font-size:13px;line-height:1.6">'+body+'</div></div></div>';
+  };
+  return '<div class="sc"><div class="card">'
+    +'<div class="card-title">'+ic('cal')+' กลไกการคำนวณ Forward Contract</div>'
+    +'<div class="alert info">'+ic('info')+'<div>สรุปวิธีที่ระบบคำนวณ <strong>วันที่</strong> และ <strong>Forward Rate</strong> ของแต่ละ tenor ในหน้า Simulation</div></div>'
+
+    /* Input / Output */
+    +'<div class="row" style="margin-bottom:4px">'
+      +'<div class="fg"><span class="fl">Input</span><div style="font-size:13px;color:var(--t2);line-height:1.7">• วันทำรายการจอง<br>• วันสิ้นสุดสัญญา<br>• สกุลเงิน · ฝั่งซื้อ/ขาย</div></div>'
+      +'<div class="fg"><span class="fl">Output</span><div style="font-size:13px;color:var(--t2);line-height:1.7">ตาราง Spot + tenor รายเดือน<br>แต่ละแถว: วันเริ่ม · วันสิ้นสุด · Forward Rate</div></div>'
+    +'</div>'
+
+    /* Date steps */
+    +'<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bdr)">'
+      +'<div class="card-title" style="border-bottom:none;padding-bottom:0;margin-bottom:14px">ขั้นตอนคำนวณวันที่</div>'
+      +step(1,'T+0 = วันทำรายการจอง','วันที่ลูกค้าทำรายการ เป็นจุดตั้งต้น')
+      +step(2,'Spot Value Date (T+2)','นับจาก T+0 ไป <strong>2 วันทำการ</strong> → ใช้เป็นวันสิ้นสุดของแถว Spot และเป็น<strong>ฐานนับ tenor</strong>')
+      +step(3,'วันสิ้นสุด tenor ที่ n','= Spot Value Date <strong>+ n เดือน</strong> (คงวันที่เดิมของเดือน · ถ้าเดือนนั้นไม่มีวันนั้น ใช้วันสุดท้ายของเดือน) · นับจาก Spot ทุก tenor ไม่ต่อกันเป็นทอด เพื่อกันวันที่เพี้ยนสะสม')
+      +step(4,'วันเริ่ม tenor ถัดไป','= 1 วันถัดจากวันสิ้นสุด tenor ก่อนหน้า แล้วเลื่อนเป็นวันทำการ')
+    +'</div>'
+
+    /* Business-day rules */
+    +'<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bdr)">'
+      +'<div class="card-title" style="border-bottom:none;padding-bottom:0;margin-bottom:10px">กฎเลื่อนวันหยุด</div>'
+      +'<div style="color:var(--t2);font-size:13px;line-height:1.7;margin-bottom:8px">วันหยุด = เสาร์ · อาทิตย์ · วันหยุดธนาคารที่กำหนดไว้</div>'
+      +'<table class="rate-table"><thead><tr><th>ประเภทวัน</th><th>กฎ</th><th>พฤติกรรม</th></tr></thead><tbody>'
+        +'<tr><td>วันเริ่ม / Spot</td><td><strong>Following</strong></td><td>เลื่อนไปข้างหน้าจนเจอวันทำการ</td></tr>'
+        +'<tr><td>วันสิ้นสุด tenor</td><td><strong>Modified Following</strong></td><td>เลื่อนไปข้างหน้า · แต่ถ้าเลื่อนแล้ว<strong>ข้ามเดือน</strong> ให้เลื่อนกลับมาวันทำการก่อนหน้าแทน</td></tr>'
+      +'</tbody></table>'
+      +'<div style="margin-top:8px;font-size:13px;line-height:1.8">'
+        +'<span style="color:#F59E0B;font-weight:700">●</span> ขยับวันออก (ไปข้างหน้า) &nbsp;&nbsp;'
+        +'<span style="color:#38BDF8;font-weight:700">●</span> ขยับวันเข้า (ย้อนกลับ)'
+      +'</div>'
+    +'</div>'
+
+    /* Rate formula */
+    +'<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bdr)">'
+      +'<div class="card-title" style="border-bottom:none;padding-bottom:0;margin-bottom:10px">สูตร Forward Rate</div>'
+      +'<div style="background:var(--bg2,rgba(0,0,0,.03));border:1px solid var(--bdr);border-radius:8px;padding:12px 14px;font-size:15px;font-weight:700;text-align:center;margin-bottom:8px">Forward Rate = Spot Rate + Forward Points[n]</div>'
+      +'<div style="color:var(--t2);font-size:13px;line-height:1.7">• <strong>Forward Points</strong> ต่างกันตามสกุลเงินและ tenor (เดือน)<br>• แถว <strong>Spot</strong> ใช้ Spot Rate ตรงๆ (ไม่บวก Forward Points)</div>'
+    +'</div>'
+
+    /* Example */
+    +'<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bdr)">'
+      +'<div class="card-title" style="border-bottom:none;padding-bottom:0;margin-bottom:10px">ตัวอย่าง</div>'
+      +'<div style="color:var(--t2);font-size:13px;margin-bottom:8px">จอง <strong>28 ม.ค. 2026</strong> → สิ้นสุด <strong>28 มิ.ย. 2026</strong> · Spot Value Date = 30 ม.ค. (ศุกร์)</div>'
+      +'<table class="rate-table"><thead><tr><th>tenor</th><th>คำนวณ</th><th>วันสิ้นสุด</th><th>หมายเหตุ</th></tr></thead><tbody>'
+        +'<tr><td>M1</td><td>30 ก.พ.→28 ก.พ. (เสาร์)</td><td><span style="color:#38BDF8;font-weight:700">27 ก.พ.</span></td><td>เลื่อนหน้าจะข้ามเดือน → ถอยกลับ</td></tr>'
+        +'<tr><td>M2</td><td>30 มี.ค. (จันทร์)</td><td>30 มี.ค.</td><td>วันทำการ ไม่ขยับ</td></tr>'
+        +'<tr><td>M3</td><td>30 เม.ย. (พฤหัส)</td><td>30 เม.ย.</td><td>วันทำการ ไม่ขยับ</td></tr>'
+        +'<tr><td>M4</td><td>30 พ.ค. (เสาร์)</td><td><span style="color:#38BDF8;font-weight:700">29 พ.ค.</span></td><td>เลื่อนหน้าจะข้ามเดือน → ถอยกลับ</td></tr>'
+        +'<tr><td>M5</td><td>28 มิ.ย. (อาทิตย์)</td><td><span style="color:#F59E0B;font-weight:700">29 มิ.ย.</span></td><td>วันสิ้นสุดสัญญา → เลื่อนไปข้างหน้า</td></tr>'
+      +'</tbody></table>'
+    +'</div>'
+    +'</div></div>';
+}
 function bindAdmin(){
   var saveBtn=document.getElementById('btn-admin-save');
   if(saveBtn)saveBtn.addEventListener('click',function(){
@@ -1395,6 +1474,7 @@ function render(){
   if(P.phase===2){el.innerHTML=hFXHome();return;}
   if(P.phase===5){el.innerHTML=hAdmin();bindAdmin();return;}
   if(P.phase===6){el.innerHTML=hEmployee();bindEmployee();return;}
+  if(P.phase===7){el.innerHTML=hFwdDoc();return;}
   var hMap=[null,h1,h2,h3,h4,h5];
   el.innerHTML=(hMap[P.step]||h1)();
   bindWizard();
