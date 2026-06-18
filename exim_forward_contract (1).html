@@ -34,7 +34,7 @@ body{font-family:'Noto Sans Thai',sans-serif;background:var(--bg);color:var(--t1
 .subnav a{font-size:12px;color:rgba(255,255,255,.5);text-decoration:none;padding:3px 10px;border-radius:4px;cursor:pointer;transition:color .15s;}
 .subnav a:hover{color:#fff;}.subnav a.active{color:#fff;background:var(--red);font-weight:600;}
 .subnav .sep{color:rgba(255,255,255,.3);font-size:11px;}
-.main{flex:1;padding:28px 32px;max-width:900px;margin:0 auto;width:100%;}
+.main{flex:1;padding:28px 32px;max-width:1100px;margin:0 auto;width:100%;}
 .wizard{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:20px 24px 16px;margin-bottom:22px;}
 .wz-wrap{position:relative;}
 .wz-row{display:flex;align-items:flex-start;}
@@ -723,6 +723,7 @@ function switchSimTab(tab){
   var offSt='flex:1;background:transparent;border:none;color:rgba(255,255,255,.45);padding:4px 0;border-radius:3px;font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;';
   if(tab==='config'){
     cp.style.display='';fp.style.display='none';
+    var sb=document.getElementById('sim-body');if(sb)sb.style.width='300px';
     if(bc)bc.style.cssText=onSt;if(bf)bf.style.cssText=offSt;
     renderSimRows();
   } else {
@@ -780,7 +781,7 @@ function simReset(){
   var msg=document.getElementById('sim-msg');
   if(msg){msg.textContent='✓ รีเซ็ตแล้ว';setTimeout(function(){msg.textContent='';},2000);}
 }
-var _fwdSim={ccy:'USD',side:'sell',startDate:'',endDate:'',showHol:false,endErr:''};
+var _fwdSim={ccy:'USD',side:'sell',startDate:'2026-01-28',endDate:'2026-06-29',showHol:false,endErr:''};
 function setFwdEnd(v){
   _fwdSim.endErr='';
   if(v){
@@ -798,11 +799,12 @@ function renderFwdSim(){
   var isJPY=ccy==='JPY';
   var inp=_fwdSim.startDate,inpE=_fwdSim.endDate;
 
-  var adjStart='',spotVal='',adjEnd='',maxMo=0,rawSpotStart='';
+  var adjStart='',spotVal='',adjEnd='',maxMo=0,rawSpotStart='',spotIsEOM=false;
   if(inp&&inpE){
-    rawSpotStart=addDay(inp);                    /* raw T+1 (1 day after inp) */
-    adjStart=adjBizDay(rawSpotStart);            /* T+1 adjusted → Spot row start */
+    rawSpotStart=addDay(inp);                    /* T+1 (1 day after inp) */
+    adjStart=rawSpotStart;                       /* Spot row start — ไม่เลื่อนวันหยุด */
     spotVal=addBizDays(adjBizDay(inp),2);        /* T+2 from T+0 → Spot row end */
+    spotIsEOM=dayjs(nextBiz(spotVal)).month()!==dayjs(spotVal).month(); /* T+2 = วันทำการสุดท้ายของเดือน → EOM rule */
     adjEnd=adjBizDay(inpE);
     var ms=Math.round((new Date(adjEnd)-new Date(spotVal))/30/24/3600/1000);
     maxMo=Math.max(0,Math.min(6,ms));
@@ -810,6 +812,7 @@ function renderFwdSim(){
 
   var seg=SEGS[CUST_SEG],sprd=seg?seg.spread:0.03,cr=M.rates[ccy]?M.rates[ccy].spot:0;
   var dp=isJPY?6:4;
+  var eomBadge='<span title="End-of-Month: ยึดวันสุดท้ายของเดือน" style="display:inline-block;font-size:8px;font-weight:700;background:#7C3AED;color:#fff;padding:1px 4px;border-radius:3px;margin-left:3px;vertical-align:middle;letter-spacing:.5px;">EOM</span>';
   function fmtR(v){return Number(v).toFixed(dp);}
   function fmtD(s){var dj=dayjs(s);return new Date(dj.year(),dj.month(),dj.date()).toLocaleDateString('th-TH',{day:'numeric',month:'short'});}
   /* show adj date; if raw≠adj, show original below — amber=ขยับวันออก, cyan=ขยับวันเข้า */
@@ -826,29 +829,33 @@ function renderFwdSim(){
           +'<div style="color:rgba(255,255,255,.28);font-size:9px;line-height:1.4;margin-top:1px;">'+formula+'</div>';
   }
 
-  var tbl='';
+  var tbl='',rightHtml='',tenors=[];
   if(adjStart&&maxMo>0){
     var thSt='color:rgba(255,255,255,.4);font-weight:600;padding:4px 5px;border-bottom:1px solid rgba(255,255,255,.15);font-size:10px;';
     var tdSt='padding:5px 5px;border-bottom:1px solid rgba(255,255,255,.07);vertical-align:top;font-size:11px;';
 
-    /* Spot row: start=adjStart (T+0), end=spotVal (T+2)
-       rawSpotVal = T+2 from raw inp (before biz-day adjustment) — shown as original if shifted */
-    var rawSpotVal=inp?addBizDays(inp,2):spotVal;
+    /* Spot row: start=adjStart (T+1), end=spotVal (T+2 = 2 วันทำการ)
+       rawSpotVal = T+2 แบบนับปฏิทินดิบ (2 วันจากวันทำการตั้งต้น) — ถ้าโดนวันหยุดดันออกจะโชว์ (จาก ...) */
+    var rawSpotVal=inp?dayjs(adjBizDay(inp)).add(2,'day').format('YYYY-MM-DD'):spotVal;
     var rows=
       '<tr style="background:rgba(255,255,255,.04);">'
       +'<td style="'+tdSt+'color:#F59E0B;font-weight:700;">Spot</td>'
       +'<td style="'+tdSt+'color:rgba(255,255,255,.8);">'+dateCell(rawSpotStart,adjStart)+'</td>'
       +'<td style="'+tdSt+'color:rgba(255,255,255,.8);">'+dateCell(rawSpotVal,spotVal)+'</td>'
       +'<td style="'+tdSt+'text-align:right;">'+rateCell(cr,'Spot Rate')+'</td>'
+      +'<td style="'+tdSt+'text-align:right;color:rgba(255,255,255,.55);">'+dayjs(spotVal).diff(dayjs(adjStart),'day')+'</td>'
+      +'<td style="'+tdSt+'text-align:right;color:rgba(255,255,255,.3);">—</td>'
+      +'<td style="'+tdSt+'"></td>'
       +'</tr>';
 
     var prevEnd=spotVal;
     for(var m=1;m<=maxMo;m++){
-      /* start = next biz day strictly after prevEnd */
-      var rawRowStart=addDay(prevEnd);
-      var rowStart=adjBizDay(rawRowStart);
-      /* end = spotVal + m months → Modified Following; last month uses adjEnd */
-      var rawMonthEnd=dayjs(spotVal).add(m,'month').format('YYYY-MM-DD');
+      /* start = 1 วันถัดจาก expiry ก่อนหน้า — ไม่เลื่อนวันหยุด */
+      var rowStart=addDay(prevEnd);
+      /* end = spotVal + m months (EOM: วันสุดท้ายของเดือน) → Modified Following; last month uses adjEnd */
+      var rawMonthEnd=spotIsEOM
+        ?dayjs(spotVal).add(m,'month').endOf('month').format('YYYY-MM-DD')
+        :dayjs(spotVal).add(m,'month').format('YYYY-MM-DD');
       var rowEnd=m===maxMo?adjEnd:adjModFol(rawMonthEnd);
       var rawRowEnd=m===maxMo?inpE:rawMonthEnd;
 
@@ -859,10 +866,14 @@ function renderFwdSim(){
 
       rows+='<tr>'
         +'<td style="'+tdSt+'color:rgba(255,255,255,.5);">'+m+'</td>'
-        +'<td style="'+tdSt+'color:rgba(255,255,255,.8);">'+dateCell(rawRowStart,rowStart)+'</td>'
-        +'<td style="'+tdSt+'color:rgba(255,255,255,.8);">'+dateCell(rawRowEnd,rowEnd)+'</td>'
+        +'<td style="'+tdSt+'color:rgba(255,255,255,.8);">'+dateCell(rowStart,rowStart)+'</td>'
+        +'<td style="'+tdSt+'color:rgba(255,255,255,.8);">'+dateCell(rawRowEnd,rowEnd)+(spotIsEOM&&m!==maxMo?eomBadge:'')+'</td>'
         +'<td style="'+tdSt+'text-align:right;">'+rateCell(fwdRt,fwdFormula)+'</td>'
+        +'<td style="'+tdSt+'text-align:right;color:rgba(255,255,255,.55);">'+dayjs(rowEnd).diff(dayjs(rowStart),'day')+'</td>'
+        +'<td style="'+tdSt+'text-align:right;color:rgba(255,255,255,.7);">'+(sw>=0?'+':'')+sw.toFixed(dp)+'</td>'
+        +'<td style="'+tdSt+'"></td>'
         +'</tr>';
+      tenors.push({m:m,start:rowStart,end:rowEnd,fwd:fwdRt,sw:sw});
       prevEnd=rowEnd;
     }
     tbl='<table style="width:100%;border-collapse:collapse;margin-top:10px;">'
@@ -871,11 +882,44 @@ function renderFwdSim(){
       +'<th style="text-align:left;'+thSt+'">วันเริ่มต้น</th>'
       +'<th style="text-align:left;'+thSt+'">วันสิ้นสุด</th>'
       +'<th style="text-align:right;'+thSt+'">Rate</th>'
+      +'<th style="text-align:right;'+thSt+'">term</th>'
+      +'<th style="text-align:right;'+thSt+'">PREMIUM/DISC.</th>'
+      +'<th style="text-align:right;white-space:nowrap;'+thSt+'">T/T MARK UP</th>'
       +'</tr>'+rows+'</table>'
       +'<div style="margin-top:8px;font-size:9px;color:rgba(255,255,255,.28);line-height:1.7;">'
         +'Forward Rate = Spot Rate + Fwd Pts[m]<br>'
         +'Fwd Pts ('+ccy+'): '+(function(){return[1,2,3,4,5,6].map(function(i){var v=M.rates[ccy]?M.rates[ccy].sw[i]||0:0;return'M'+i+'='+(v>=0?'+':'')+v.toFixed(dp);}).join(' ');})()
       +'</div>';
+
+    /* daily prorate tables per tenor — 1 ตารางต่อ 1 tenor */
+    var dThS='color:rgba(255,255,255,.4);font-weight:600;padding:3px 6px;border-bottom:1px solid rgba(255,255,255,.15);font-size:9px;text-align:left;';
+    var dTdS='padding:3px 6px;border-bottom:1px solid rgba(255,255,255,.06);font-size:10px;';
+    rightHtml='<div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Rate รายวันแต่ละ tenor (prorate)</div>'
+      +'<div style="font-size:9px;color:rgba(255,255,255,.3);margin-bottom:10px;line-height:1.5;">Rate = Spot + Fwd Pts × (จำนวนวันจาก Spot value date / จำนวนวันรวมของ tenor) · ครบ tenor = Forward Rate เต็ม</div>';
+    tenors.forEach(function(t){
+      var totalDays=dayjs(t.end).diff(dayjs(t.start),'day');
+      var swStr=(t.sw>=0?'+':'−')+Math.abs(t.sw).toFixed(dp);
+      var dayRows='',seq=0,d=dayjs(t.start),endD=dayjs(t.end);
+      while(!d.isAfter(endD)){
+        seq++;
+        var ds=d.format('YYYY-MM-DD');
+        var elapsed=d.diff(dayjs(t.start),'day');
+        var rate=cr+t.sw*(totalDays>0?elapsed/totalDays:0);
+        var hol=!isBizDay(ds);
+        dayRows+='<tr'+(hol?' style="opacity:.4;"':'')+'>'
+          +'<td style="'+dTdS+'color:rgba(255,255,255,.4);">'+seq+'</td>'
+          +'<td style="'+dTdS+'color:rgba(255,255,255,.8);">'+fmtD(ds)+'</td>'
+          +'<td style="'+dTdS+'color:#4ADE80;font-weight:700;text-align:right;">'+fmtR(rate)+'</td>'
+          +'<td style="'+dTdS+'color:rgba(255,255,255,.3);">Spot '+swStr+'×'+elapsed+'/'+totalDays+'</td>'
+          +'</tr>';
+        d=d.add(1,'day');
+      }
+      rightHtml+='<div style="margin-bottom:14px;">'
+        +'<div style="font-size:11px;font-weight:700;color:#fff;margin-bottom:4px;">Tenor '+t.m+' <span style="color:rgba(255,255,255,.4);font-weight:400;">('+fmtD(t.start)+' – '+fmtD(t.end)+') · FR='+fmtR(t.fwd)+'</span></div>'
+        +'<table style="width:100%;border-collapse:collapse;">'
+        +'<tr><th style="'+dThS+'">#</th><th style="'+dThS+'">วัน</th><th style="'+dThS+'text-align:right;">Rate</th><th style="'+dThS+'">สูตร</th></tr>'
+        +dayRows+'</table></div>';
+    });
   } else if(inp&&inpE){
     tbl='<div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:8px;text-align:center;">ช่วงเวลาต้องมากกว่า 1 เดือน</div>';
   } else {
@@ -885,7 +929,7 @@ function renderFwdSim(){
   var inpSt='width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff;padding:5px 8px;border-radius:4px;font-size:12px;font-family:inherit;';
   var lblSt='font-size:10px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;';
   var ccyOpts=M.ccys.map(function(c){return'<option value="'+c+'"'+(ccy===c?' selected':'')+'>'+c+'</option>';}).join('');
-  el.innerHTML=
+  var leftHtml=
     '<div style="margin-bottom:8px;">'
       +'<div style="'+lblSt+'">สกุลเงิน</div>'
       +'<select onchange="_fwdSim.ccy=this.value;renderFwdSim();" style="'+inpSt+'">'+ccyOpts+'</select>'
@@ -908,7 +952,7 @@ function renderFwdSim(){
       +'</div>'
     +'</div>'
     +(_fwdSim.endErr?'<div style="font-size:10px;color:#F87171;margin-bottom:6px;">'+_fwdSim.endErr+'</div>':'')
-    +(adjStart?'<div style="font-size:10px;color:rgba(255,255,255,.3);margin-bottom:4px;">Spot value date (T+2): '+fmtD(spotVal)+'</div>':'')
+    +(adjStart?'<div style="font-size:10px;color:rgba(255,255,255,.3);margin-bottom:4px;">Spot value date (T+2): '+fmtD(spotVal)+(spotIsEOM?eomBadge+' <span style="color:#A78BFA;">วันทำการสุดท้ายของเดือน</span>':'')+'</div>':'')
     +tbl
     /* Holiday manager */
     +'<div style="margin-top:10px;border-top:1px solid rgba(255,255,255,.1);padding-top:8px;">'
@@ -933,6 +977,18 @@ function renderFwdSim(){
         +'</div>'
       :'')
     +'</div>';
+
+  var sb=document.getElementById('sim-body');
+  if(rightHtml){
+    if(sb)sb.style.width='1000px';
+    el.innerHTML='<div style="display:flex;gap:16px;align-items:flex-start;">'
+      +'<div style="flex:1 1 50%;min-width:0;">'+leftHtml+'</div>'
+      +'<div style="flex:1 1 50%;min-width:0;max-height:72vh;overflow-y:auto;border-left:1px solid rgba(255,255,255,.1);padding-left:16px;">'+rightHtml+'</div>'
+      +'</div>';
+  } else {
+    if(sb)sb.style.width='300px';
+    el.innerHTML=leftHtml;
+  }
 }
 
 function h1(){
@@ -1233,56 +1289,68 @@ function hFwdDoc(){
       +'<div style="flex:1"><div style="font-weight:700;margin-bottom:3px">'+title+'</div>'
       +'<div style="color:var(--t2);font-size:13px;line-height:1.6">'+body+'</div></div></div>';
   };
+  var term=function(t,d){return '<div style="display:flex;gap:8px;margin-bottom:6px"><div style="flex:0 0 120px;font-weight:700;color:var(--t1);font-size:13px">'+t+'</div><div style="flex:1;color:var(--t2);font-size:13px;line-height:1.6">'+d+'</div></div>';};
   return '<div class="sc"><div class="card">'
     +'<div class="card-title">'+ic('cal')+' กลไกการคำนวณ Forward Contract</div>'
-    +'<div class="alert info">'+ic('info')+'<div>สรุปวิธีที่ระบบคำนวณ <strong>วันที่</strong> และ <strong>Forward Rate</strong> ของแต่ละ tenor ในหน้า Simulation</div></div>'
+    +'<div class="alert info">'+ic('info')+'<div><strong>อ่านสั้น ๆ:</strong> ระบบทำ 3 อย่างตามลำดับ → <strong>(1)</strong> หาวันตั้งต้นมาตรฐานที่ชื่อ <strong>Spot</strong> · <strong>(2)</strong> กางวันสิ้นสุดของแต่ละเดือน (tenor) ออกมา · <strong>(3)</strong> คิด <strong>Forward Rate</strong> ของแต่ละเดือน จากเรตวันนี้บวก/ลบส่วนต่างล่วงหน้า</div></div>'
+
+    /* Glossary */
+    +'<div style="background:var(--bg2,rgba(0,0,0,.03));border:1px solid var(--bdr);border-radius:8px;padding:14px 16px;margin-bottom:4px">'
+      +'<div style="font-weight:700;font-size:13px;margin-bottom:8px">ศัพท์ที่ต้องรู้ก่อน</div>'
+      +term('Spot Rate','เรตแลกเงิน ณ วันนี้')
+      +term('Tenor','ช่วงอายุของสัญญา นับเป็นเดือน (1–6 เดือน)')
+      +term('Forward Points','ส่วนต่างเรตล่วงหน้า (บวกหรือลบก็ได้) · ต่างกันตามสกุลเงินและจำนวนเดือน')
+      +term('Value Date','วันที่ส่งมอบเงินจริง')
+    +'</div>'
 
     /* Input / Output */
-    +'<div class="row" style="margin-bottom:4px">'
-      +'<div class="fg"><span class="fl">Input</span><div style="font-size:13px;color:var(--t2);line-height:1.7">• วันทำรายการจอง<br>• วันสิ้นสุดสัญญา<br>• สกุลเงิน · ฝั่งซื้อ/ขาย</div></div>'
-      +'<div class="fg"><span class="fl">Output</span><div style="font-size:13px;color:var(--t2);line-height:1.7">ตาราง Spot + tenor รายเดือน<br>แต่ละแถว: วันเริ่ม · วันสิ้นสุด · Forward Rate</div></div>'
+    +'<div class="row" style="margin-top:16px;margin-bottom:4px">'
+      +'<div class="fg"><span class="fl">ใส่อะไรเข้าไป</span><div style="font-size:13px;color:var(--t2);line-height:1.7">• วันทำรายการจอง<br>• วันสิ้นสุดสัญญา<br>• สกุลเงิน · ฝั่งซื้อ/ขาย</div></div>'
+      +'<div class="fg"><span class="fl">ได้อะไรออกมา</span><div style="font-size:13px;color:var(--t2);line-height:1.7">ตาราง Spot + tenor รายเดือน<br>แต่ละแถว: วันเริ่ม · วันสิ้นสุด · Forward Rate</div></div>'
     +'</div>'
 
     /* Date steps */
     +'<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bdr)">'
-      +'<div class="card-title" style="border-bottom:none;padding-bottom:0;margin-bottom:14px">ขั้นตอนคำนวณวันที่</div>'
-      +step(1,'T+0 = วันทำรายการจอง','วันที่ลูกค้าทำรายการ เป็นจุดตั้งต้น')
-      +step(2,'Spot Value Date (T+2)','นับจาก T+0 ไป <strong>2 วันทำการ</strong> → ใช้เป็นวันสิ้นสุดของแถว Spot และเป็น<strong>ฐานนับ tenor</strong>')
-      +step(3,'วันสิ้นสุด tenor ที่ n','= Spot Value Date <strong>+ n เดือน</strong> (คงวันที่เดิมของเดือน · ถ้าเดือนนั้นไม่มีวันนั้น ใช้วันสุดท้ายของเดือน) · นับจาก Spot ทุก tenor ไม่ต่อกันเป็นทอด เพื่อกันวันที่เพี้ยนสะสม')
-      +step(4,'วันเริ่ม tenor ถัดไป','= 1 วันถัดจากวันสิ้นสุด tenor ก่อนหน้า แล้วเลื่อนเป็นวันทำการ')
+      +'<div class="card-title" style="border-bottom:none;padding-bottom:0;margin-bottom:14px">หาวันที่ ทีละขั้น</div>'
+      +step(1,'เริ่มจากวันจอง (T+0)','วันที่ลูกค้ากดจอง = จุดตั้งต้น')
+      +step(2,'หาวัน Spot (T+2)','นับจากวันจองไป <strong>2 วันทำการ</strong> · วัน Spot นี้คือ<strong>จุดเริ่มนับเดือน</strong>ของทุก tenor')
+      +step(3,'หาวันสิ้นสุดของแต่ละเดือน','เอาวัน Spot บวกจำนวนเดือน (+1, +2, …) · <strong>นับจากวัน Spot ทุกครั้ง</strong> ไม่ต่อกันเป็นทอด เพื่อกันวันเพี้ยนสะสม · ถ้าเดือนนั้นไม่มีวันที่ตรงกัน ใช้<strong>วันสุดท้ายของเดือน</strong>')
+      +step(4,'หาวันเริ่มของเดือนถัดไป','= วันถัดจากวันสิ้นสุดเดือนก่อนหน้า 1 วัน (<strong>ไม่ขยับวันหยุด</strong>)')
+      +'<div class="alert warn" style="margin-top:4px">'+ic('warn')+'<div><strong>กรณีพิเศษ (สิ้นเดือน):</strong> ถ้าวัน Spot เป็น<strong>วันทำการสุดท้ายของเดือน</strong> ระบบจะให้วันสิ้นสุดของทุก tenor ไปจบที่<strong>สิ้นเดือน</strong>เช่นกัน</div></div>'
     +'</div>'
 
     /* Business-day rules */
     +'<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bdr)">'
-      +'<div class="card-title" style="border-bottom:none;padding-bottom:0;margin-bottom:10px">กฎเลื่อนวันหยุด</div>'
-      +'<div style="color:var(--t2);font-size:13px;line-height:1.7;margin-bottom:8px">วันหยุด = เสาร์ · อาทิตย์ · วันหยุดธนาคารที่กำหนดไว้</div>'
-      +'<table class="rate-table"><thead><tr><th>ประเภทวัน</th><th>กฎ</th><th>พฤติกรรม</th></tr></thead><tbody>'
-        +'<tr><td>วันเริ่ม / Spot</td><td><strong>Following</strong></td><td>เลื่อนไปข้างหน้าจนเจอวันทำการ</td></tr>'
-        +'<tr><td>วันสิ้นสุด tenor</td><td><strong>Modified Following</strong></td><td>เลื่อนไปข้างหน้า · แต่ถ้าเลื่อนแล้ว<strong>ข้ามเดือน</strong> ให้เลื่อนกลับมาวันทำการก่อนหน้าแทน</td></tr>'
+      +'<div class="card-title" style="border-bottom:none;padding-bottom:0;margin-bottom:10px">ถ้าวันสิ้นสุดตรงวันหยุด ทำยังไง?</div>'
+      +'<div style="color:var(--t2);font-size:13px;line-height:1.7;margin-bottom:8px">วันหยุด = เสาร์ · อาทิตย์ · วันหยุดธนาคาร · ระบบจะ<strong>ขยับเฉพาะวันสิ้นสุด</strong> เท่านั้น (วันเริ่มไม่ขยับ)</div>'
+      +'<table class="rate-table"><thead><tr><th>วันแบบไหน</th><th>กฎ</th><th>ทำอะไร</th></tr></thead><tbody>'
+        +'<tr><td>วันเริ่ม tenor</td><td>—</td><td>ไม่ขยับ · ใช้วันถัดจากวันก่อนหน้าตรง ๆ</td></tr>'
+        +'<tr><td>วันสิ้นสุด tenor</td><td><strong>Modified Following</strong></td><td>ปกติขยับไปข้างหน้าหาวันทำการ · แต่ถ้าขยับแล้ว<strong>ข้ามไปเดือนใหม่</strong> → ถอยกลับมาวันทำการก่อนหน้าแทน</td></tr>'
       +'</tbody></table>'
       +'<div style="margin-top:8px;font-size:13px;line-height:1.8">'
         +'<span style="color:#F59E0B;font-weight:700">●</span> ขยับวันออก (ไปข้างหน้า) &nbsp;&nbsp;'
-        +'<span style="color:#38BDF8;font-weight:700">●</span> ขยับวันเข้า (ย้อนกลับ)'
+        +'<span style="color:#38BDF8;font-weight:700">●</span> ขยับวันเข้า (ย้อนกลับ) &nbsp;&nbsp;'
+        +'<span style="display:inline-block;font-size:9px;font-weight:700;background:#7C3AED;color:#fff;padding:1px 5px;border-radius:3px;vertical-align:middle;letter-spacing:.5px;">EOM</span> วันสิ้นสุดที่ยึดวันสุดท้ายของเดือน'
       +'</div>'
     +'</div>'
 
     /* Rate formula */
     +'<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bdr)">'
-      +'<div class="card-title" style="border-bottom:none;padding-bottom:0;margin-bottom:10px">สูตร Forward Rate</div>'
-      +'<div style="background:var(--bg2,rgba(0,0,0,.03));border:1px solid var(--bdr);border-radius:8px;padding:12px 14px;font-size:15px;font-weight:700;text-align:center;margin-bottom:8px">Forward Rate = Spot Rate + Forward Points[n]</div>'
-      +'<div style="color:var(--t2);font-size:13px;line-height:1.7">• <strong>Forward Points</strong> ต่างกันตามสกุลเงินและ tenor (เดือน)<br>• แถว <strong>Spot</strong> ใช้ Spot Rate ตรงๆ (ไม่บวก Forward Points)</div>'
+      +'<div class="card-title" style="border-bottom:none;padding-bottom:0;margin-bottom:10px">คิด Forward Rate ยังไง</div>'
+      +'<div style="background:var(--bg2,rgba(0,0,0,.03));border:1px solid var(--bdr);border-radius:8px;padding:12px 14px;font-size:15px;font-weight:700;text-align:center;margin-bottom:8px">Forward Rate = Spot Rate + Forward Points</div>'
+      +'<div style="color:var(--t2);font-size:13px;line-height:1.7">• เอาเรตวันนี้ (Spot) เป็นฐาน แล้วบวก/ลบส่วนต่างล่วงหน้าของเดือนนั้น<br>• Forward Points ต่างกันตามสกุลเงินและจำนวนเดือน<br>• แถว <strong>Spot</strong> ใช้เรตวันนี้ตรง ๆ (ไม่บวกอะไร)</div>'
     +'</div>'
 
     /* Example */
     +'<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bdr)">'
-      +'<div class="card-title" style="border-bottom:none;padding-bottom:0;margin-bottom:10px">ตัวอย่าง</div>'
-      +'<div style="color:var(--t2);font-size:13px;margin-bottom:8px">จอง <strong>28 ม.ค. 2026</strong> → สิ้นสุด <strong>28 มิ.ย. 2026</strong> · Spot Value Date = 30 ม.ค. (ศุกร์)</div>'
-      +'<table class="rate-table"><thead><tr><th>tenor</th><th>คำนวณ</th><th>วันสิ้นสุด</th><th>หมายเหตุ</th></tr></thead><tbody>'
-        +'<tr><td>M1</td><td>30 ก.พ.→28 ก.พ. (เสาร์)</td><td><span style="color:#38BDF8;font-weight:700">27 ก.พ.</span></td><td>เลื่อนหน้าจะข้ามเดือน → ถอยกลับ</td></tr>'
-        +'<tr><td>M2</td><td>30 มี.ค. (จันทร์)</td><td>30 มี.ค.</td><td>วันทำการ ไม่ขยับ</td></tr>'
-        +'<tr><td>M3</td><td>30 เม.ย. (พฤหัส)</td><td>30 เม.ย.</td><td>วันทำการ ไม่ขยับ</td></tr>'
-        +'<tr><td>M4</td><td>30 พ.ค. (เสาร์)</td><td><span style="color:#38BDF8;font-weight:700">29 พ.ค.</span></td><td>เลื่อนหน้าจะข้ามเดือน → ถอยกลับ</td></tr>'
-        +'<tr><td>M5</td><td>28 มิ.ย. (อาทิตย์)</td><td><span style="color:#F59E0B;font-weight:700">29 มิ.ย.</span></td><td>วันสิ้นสุดสัญญา → เลื่อนไปข้างหน้า</td></tr>'
+      +'<div class="card-title" style="border-bottom:none;padding-bottom:0;margin-bottom:10px">ลองดูของจริง</div>'
+      +'<div style="color:var(--t2);font-size:13px;margin-bottom:8px">จอง <strong>28 ม.ค. 2026</strong> → สิ้นสุด <strong>28 มิ.ย. 2026</strong> · วัน Spot = 30 ม.ค. (ศุกร์) = <strong>วันทำการสุดท้ายของเดือน</strong> → เข้ากรณีพิเศษ EOM ทุก tenor จึง<strong>ยืนจากวันสิ้นเดือน</strong></div>'
+      +'<table class="rate-table"><thead><tr><th>tenor</th><th>คำนวณ (สิ้นเดือน)</th><th>วันสิ้นสุด</th><th>หมายเหตุ</th></tr></thead><tbody>'
+        +'<tr><td>M1</td><td>สิ้นเดือน ก.พ. = 28 ก.พ. (เสาร์)</td><td><span style="color:#38BDF8;font-weight:700">27 ก.พ.</span></td><td>เลื่อนหน้าจะข้ามเดือน → ถอยกลับ</td></tr>'
+        +'<tr><td>M2</td><td>สิ้นเดือน มี.ค. = 31 มี.ค. (อังคาร)</td><td>31 มี.ค.</td><td>วันทำการ ไม่ขยับ</td></tr>'
+        +'<tr><td>M3</td><td>สิ้นเดือน เม.ย. = 30 เม.ย. (พฤหัส)</td><td>30 เม.ย.</td><td>วันทำการ ไม่ขยับ</td></tr>'
+        +'<tr><td>M4</td><td>สิ้นเดือน พ.ค. = 31 พ.ค. (อาทิตย์)</td><td><span style="color:#38BDF8;font-weight:700">29 พ.ค.</span></td><td>เลื่อนหน้าจะข้ามเดือน → ถอยกลับ</td></tr>'
+        +'<tr><td>M5</td><td>วันสิ้นสุดสัญญา 28 มิ.ย. (อาทิตย์)</td><td><span style="color:#F59E0B;font-weight:700">29 มิ.ย.</span></td><td>tenor สุดท้าย ใช้วันสิ้นสุดสัญญา → เลื่อนไปข้างหน้า</td></tr>'
       +'</tbody></table>'
     +'</div>'
     +'</div></div>';
