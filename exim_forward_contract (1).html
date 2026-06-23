@@ -1036,7 +1036,7 @@ function fwd2AddBizDays(s,n,ccy){var d=dayjs(s),c=0;while(c<n){d=d.add(1,'day');
 function fwd2MaxEnd(startDate,ccy){var si=fwd2SpotInfo(startDate,ccy);return si?dayjs(si.spotVal).add(6,'month').format('YYYY-MM-DD'):'';}
 function fwd2FmtD(s){var dj=dayjs(s);return new Date(dj.year(),dj.month(),dj.date()).toLocaleDateString('th-TH',{day:'numeric',month:'short'});}
 
-var _fwdSim2={ccy:'USD',side:'sell',startDate:'2026-01-28',tenor:null,endDate:'',showHol:false,endErr:''};
+var _fwdSim2={ccy:'USD',side:'sell',startDate:'2026-01-28',tenor:null,endDate:'',clEnd:'',showHol:false,endErr:''};
 function fwd2SpotInfo(startDate,ccy){
   if(!startDate)return null;
   var spotVal=fwd2AddBizDays(fwd2AdjBiz(startDate,ccy),2,ccy);            /* T+2 = Spot value date */
@@ -1051,12 +1051,34 @@ function fwd2TenorMaturity(startDate,m,ccy){
     :dayjs(si.spotVal).add(m,'month').format('YYYY-MM-DD');
   return fwd2AdjModFol(rawMonthEnd,ccy);
 }
-function setFwd2Ccy(v){_fwdSim2.ccy=v;if(_fwdSim2.tenor!=null)_fwdSim2.endDate=fwd2TenorMaturity(_fwdSim2.startDate,_fwdSim2.tenor,v);renderFwd2Sim();}
+/* ช่วงวันสิ้นสุดที่เลือกได้ของ tenor m = (จุดสิ้นสุด tenor ก่อนหน้า, จุด tenor m] */
+function fwd2TenorRange(m){
+  var ccy=_fwdSim2.ccy,start=_fwdSim2.startDate;
+  var si=fwd2SpotInfo(start,ccy);if(!si)return null;
+  var prevPoint=m>1?fwd2TenorMaturity(start,m-1,ccy):si.spotVal;
+  var winLo=dayjs(prevPoint).add(1,'day').format('YYYY-MM-DD');
+  var winHi=fwd2TenorMaturity(start,m,ccy);
+  var maxEnd=fwd2MaxEnd(start,ccy);            /* hard limit = spotVal + 6 เดือน */
+  if(maxEnd&&winHi>maxEnd)winHi=maxEnd;         /* tenor 6 แบบ EOM อาจเกิน 6 เดือน 1 วัน → cap (fix bug) */
+  return {winLo:winLo,winHi:winHi};
+}
+/* ตรวจว่าวันสิ้นสุดที่เลือกไว้ยัง valid ไหม (อยู่ในช่วง tenor + เป็นวันทำการ + ไม่เกินวันสิ้นสุดวงเงิน) */
+function fwd2EndValid(v){
+  if(!v||_fwdSim2.tenor==null)return false;
+  var r=fwd2TenorRange(_fwdSim2.tenor);if(!r)return false;
+  if(v<r.winLo||v>r.winHi)return false;
+  if(!fwd2IsBiz(v,_fwdSim2.ccy))return false;
+  if(_fwdSim2.clEnd&&v>_fwdSim2.clEnd)return false;
+  return true;
+}
+function setFwd2Ccy(v){_fwdSim2.ccy=v;if(!fwd2EndValid(_fwdSim2.endDate))_fwdSim2.endDate='';renderFwd2Sim();}
 function setFwd2Side(v){_fwdSim2.side=v;renderFwd2Sim();}
 function setFwd2Start(v){_fwdSim2.startDate=v;_fwdSim2.tenor=null;_fwdSim2.endDate='';_fwdSim2.endErr='';renderFwd2Sim();}
+/* วันสิ้นสุดวงเงิน (optional) — วันสิ้นสุดสัญญาห้ามเกินวันนี้ */
+function setFwd2ClEnd(v){_fwdSim2.clEnd=v;_fwdSim2.endErr='';if(!fwd2EndValid(_fwdSim2.endDate))_fwdSim2.endDate='';renderFwd2Sim();}
 function setFwd2Tenor(m){
   _fwdSim2.tenor=m;_fwdSim2.endErr='';
-  _fwdSim2.endDate=fwd2TenorMaturity(_fwdSim2.startDate,m,_fwdSim2.ccy); /* เลือก tenor → ตกเดือนใด ตั้ง default วันครบกำหนดของเดือนนั้น */
+  _fwdSim2.endDate=''; /* เลือก tenor แล้วไม่ auto เลือกวันสิ้นสุด — ให้ผู้ใช้เลือกเองจาก calendar (ข้อ 2) */
   renderFwd2Sim();
 }
 function setFwd2End(v){
@@ -1064,6 +1086,7 @@ function setFwd2End(v){
   if(v){
     if(!fwd2IsBiz(v,_fwdSim2.ccy)){_fwdSim2.endErr='ห้ามเลือกวันหยุด (เสาร์-อาทิตย์ หรือวันหยุดของสกุล '+_fwdSim2.ccy+')';renderFwd2Sim();return;}
     if(_fwdSim2.startDate&&v>fwd2MaxEnd(_fwdSim2.startDate,_fwdSim2.ccy)){_fwdSim2.endErr='วันสิ้นสุดต้องไม่เกิน 6 เดือนจากวัน Spot';renderFwd2Sim();return;}
+    if(_fwdSim2.clEnd&&v>_fwdSim2.clEnd){_fwdSim2.endErr='วันสิ้นสุดสัญญาต้องไม่เกินวันสิ้นสุดวงเงิน ('+fwd2FmtD(_fwdSim2.clEnd)+')';renderFwd2Sim();return;}
   }
   _fwdSim2.endDate=v;renderFwd2Sim();
 }
@@ -1078,12 +1101,10 @@ function removeHol2Ccy(s){delete fwd2CcyHol(_fwdSim2.ccy)[s];renderFwd2Sim();}
    ซึ่งคร่อมได้ถึง 2 เดือน → แสดงทุกเดือนในช่วงนั้น (ข้อนี้) */
 function fwd2Calendar(){
   if(_fwdSim2.tenor==null)return'';
-  var ccy=_fwdSim2.ccy,m=_fwdSim2.tenor,start=_fwdSim2.startDate;
-  var si=fwd2SpotInfo(start,ccy);if(!si)return'';
-  /* ขอบเขตช่วงของ tenor m — ให้สอดคล้องกับ rowStart/rowEnd ในตาราง (addDay(prevEnd) .. maturity) */
-  var prevPoint=m>1?fwd2TenorMaturity(start,m-1,ccy):si.spotVal;
-  var winLo=dayjs(prevPoint).add(1,'day').format('YYYY-MM-DD'); /* วันแรกที่เลือกได้ = ถัดจากสิ้นสุด tenor ก่อนหน้า */
-  var winHi=fwd2TenorMaturity(start,m,ccy);                     /* วันสุดท้ายที่เลือกได้ = จุดครบกำหนด tenor m */
+  var ccy=_fwdSim2.ccy,m=_fwdSim2.tenor,clEnd=_fwdSim2.clEnd;
+  /* ขอบเขตช่วงของ tenor m (cap ด้วย spotVal+6เดือน แล้วใน fwd2TenorRange) */
+  var r=fwd2TenorRange(m);if(!r)return'';
+  var winLo=r.winLo,winHi=r.winHi;
   if(!winHi||winLo>winHi)return'';
   var head=['อา','จ','อ','พ','พฤ','ศ','ส'].map(function(w){
     return '<div style="text-align:center;font-size:9px;color:rgba(255,255,255,.35);padding:2px 0;">'+w+'</div>';
@@ -1098,14 +1119,15 @@ function fwd2Calendar(){
     for(var d=1;d<=daysInMonth;d++){
       var ds=dayjs(new Date(y,mo,d)).format('YYYY-MM-DD');
       var biz=fwd2IsBiz(ds,ccy);
-      var outOfWin=ds<winLo||ds>winHi;
+      var overCl=clEnd&&ds>clEnd;                 /* เกินวันสิ้นสุดวงเงิน → เลือกไม่ได้ */
+      var outOfWin=ds<winLo||ds>winHi||overCl;
       var disabled=!biz||outOfWin;
       var sel=ds===_fwdSim2.endDate;
       var bg=sel?'#1D7A48':(disabled?'transparent':'rgba(255,255,255,.06)');
       var col=sel?'#fff':(disabled?'rgba(255,255,255,.22)':'rgba(255,255,255,.85)');
       var cur=disabled?'default':'pointer';
       var click=disabled?'':' onclick="setFwd2End(\''+ds+'\')"';
-      var ttl=disabled?(outOfWin?'นอกช่วง tenor '+m:'วันหยุด'):'';
+      var ttl=disabled?(overCl?'เกินวันสิ้นสุดวงเงิน':(outOfWin?'นอกช่วง tenor '+m:'วันหยุด')):'';
       cells+='<div'+click+' title="'+ttl+'" style="text-align:center;font-size:11px;padding:5px 0;border-radius:4px;background:'+bg+';color:'+col+';cursor:'+cur+';'+(sel?'font-weight:700;':'')+((disabled&&!biz)?'text-decoration:line-through;':'')+'">'+d+'</div>';
     }
     return '<div style="flex:1;min-width:0;">'
@@ -1118,7 +1140,7 @@ function fwd2Calendar(){
   while(!cur2.isAfter(lastMo)){grids+=monthGrid(cur2);cur2=cur2.add(1,'month');}
   return '<div style="margin-bottom:8px;border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:8px;">'
     +'<div style="display:flex;gap:10px;align-items:flex-start;">'+grids+'</div>'
-    +'<div style="font-size:9px;color:rgba(255,255,255,.3);margin-top:6px;line-height:1.5;">เลือกวันสิ้นสุดสัญญาในช่วง '+fwd2FmtD(winLo)+' – '+fwd2FmtD(winHi)+' (tenor '+m+' คร่อมได้ถึง 2 เดือน) · วันหยุดเลือกไม่ได้</div>'
+    +'<div style="font-size:9px;color:rgba(255,255,255,.3);margin-top:6px;line-height:1.5;">เลือกวันสิ้นสุดสัญญาในช่วง '+fwd2FmtD(winLo)+' – '+fwd2FmtD(winHi)+' (tenor '+m+' คร่อมได้ถึง 2 เดือน) · วันหยุดเลือกไม่ได้'+(clEnd?' · ห้ามเกินวันสิ้นสุดวงเงิน '+fwd2FmtD(clEnd):'')+'</div>'
     +'</div>';
 }
 function renderFwd2Sim(){
@@ -1290,6 +1312,11 @@ function renderFwd2Sim(){
       +'<div style="'+lblSt+'">วันทำรายการจอง</div>'
       +'<input type="date" value="'+inp+'" onchange="setFwd2Start(this.value)" style="'+inpSt+'">'
     +'</div>'
+    +'<div style="margin-bottom:8px;">'
+      +'<div style="'+lblSt+'">วันสิ้นสุดวงเงิน <span style="text-transform:none;font-weight:400;color:rgba(255,255,255,.3);">(ไม่บังคับ)</span></div>'
+      +'<input type="date" value="'+(_fwdSim2.clEnd||'')+'" onchange="setFwd2ClEnd(this.value)" style="'+inpSt+'">'
+      +(_fwdSim2.clEnd?'<div style="font-size:9px;color:rgba(255,255,255,.3);margin-top:3px;">วันสิ้นสุดสัญญาห้ามเกิน '+fmtD(_fwdSim2.clEnd)+'</div>':'')
+    +'</div>'
     +(spotVal?'<div style="font-size:10px;color:rgba(255,255,255,.3);margin-bottom:6px;">Spot value date (T+2): '+fmtD(spotVal)+(spotIsEOM?eomBadge+' <span style="color:#A78BFA;">วันทำการสุดท้ายของเดือน</span>':'')+'</div>':'')
     +'<div style="margin-bottom:8px;">'
       +'<div style="'+lblSt+'">Tenor (เดือน) — เลือกก่อน</div>'
@@ -1342,13 +1369,14 @@ function renderFwd2Sim(){
   var colHd='font-size:11px;font-weight:700;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;';
   var colSt='flex:1 1 33%;min-width:0;max-height:72vh;overflow-y:auto;';
   var sepSt='border-left:1px solid rgba(255,255,255,.1);padding-left:16px;';
-  if(rightHtml){
-    /* ขยาย modal: 1000→1500 (+50%) →1875 (+25% อีกครั้ง) แบ่ง 3 ส่วน: input · tenor แต่ละเดือน · rate รายวัน */
-    if(sb)sb.style.width='1875px';
+  /* แสดง layout 3 ส่วนเมื่อเลือก tenor แล้ว (calendar มีที่พอ) แม้ยังไม่ได้เลือกวันสิ้นสุด */
+  if(inp&&_fwdSim2.tenor!=null){
+    if(sb)sb.style.width='calc(100vw - 40px)'; /* ความกว้างยึดตามขนาดหน้าจอ (ข้อ 1) */
+    var rightCol=rightHtml||'<div style="font-size:11px;color:rgba(255,255,255,.4);text-align:center;margin-top:8px;">— เลือกวันสิ้นสุดสัญญาจาก calendar ก่อน —</div>';
     el.innerHTML='<div style="display:flex;gap:16px;align-items:flex-start;">'
       +'<div style="'+colSt+'"><div style="'+colHd+'">ข้อมูลนำเข้า</div>'+inputHtml+holHtml+'</div>'
       +'<div style="'+colSt+sepSt+'"><div style="'+colHd+'">Tenor แต่ละเดือน</div>'+tbl+'</div>'
-      +'<div style="'+colSt+sepSt+'">'+rightHtml+'</div>'
+      +'<div style="'+colSt+sepSt+'">'+rightCol+'</div>'
       +'</div>';
   } else {
     if(sb)sb.style.width='300px';
