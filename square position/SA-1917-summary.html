@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สรุป SA-1917 — แจ้งเตือนเพื่อ Square Position</title>
+<style>
+  :root{
+    --navy:#0b2545; --blue:#1d6fb8; --sky:#e8f1fb; --green:#1b8a5a;
+    --amber:#c47f17; --ink:#1f2933; --line:#dce3ec; --bg:#f4f7fb;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",Tahoma,sans-serif;background:var(--bg);
+    color:var(--ink);line-height:1.7;padding:24px}
+  .wrap{max-width:900px;margin:0 auto}
+  header{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;
+    border-radius:16px;padding:28px 32px;box-shadow:0 8px 24px rgba(11,37,69,.18)}
+  header .tag{display:inline-block;background:rgba(255,255,255,.18);
+    padding:4px 12px;border-radius:999px;font-size:13px;letter-spacing:.5px}
+  header h1{margin:12px 0 6px;font-size:24px}
+  header p{margin:0;opacity:.9;font-size:15px}
+  .meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+  .meta span{background:rgba(255,255,255,.14);border-radius:8px;
+    padding:6px 12px;font-size:13px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;
+    padding:22px 26px;margin-top:20px;box-shadow:0 2px 8px rgba(0,0,0,.03)}
+  .card h2{margin:0 0 14px;font-size:19px;color:var(--navy);
+    display:flex;align-items:center;gap:10px}
+  .card h2 .ic{width:30px;height:30px;border-radius:8px;background:var(--sky);
+    color:var(--blue);display:flex;align-items:center;justify-content:center;
+    font-size:16px;flex:0 0 auto}
+  .lead{font-size:15px;background:var(--sky);border-radius:10px;padding:14px 16px;
+    border-left:4px solid var(--blue)}
+  .flow{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
+  .flow .box{border:1px solid var(--line);border-radius:12px;padding:16px}
+  .flow .box.buy{border-top:4px solid var(--green)}
+  .flow .box.sell{border-top:4px solid var(--amber)}
+  .flow .box h3{margin:0 0 8px;font-size:15px}
+  .flow .box .arrow{font-size:13px;color:#5b6b7c;margin-top:8px}
+  .pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;
+    border-radius:999px}
+  .pill.g{background:#e3f5ec;color:var(--green)}
+  .pill.a{background:#fdf2dd;color:var(--amber)}
+  ul{margin:8px 0;padding-left:22px}
+  li{margin:6px 0}
+  .cond{display:grid;gap:12px}
+  .cond .row{display:flex;gap:14px;align-items:flex-start;
+    border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .cond .num{width:30px;height:30px;border-radius:50%;background:var(--navy);
+    color:#fff;display:flex;align-items:center;justify-content:center;
+    font-weight:700;flex:0 0 auto}
+  .cond .amt{font-weight:700;color:var(--blue)}
+  table{width:100%;border-collapse:collapse;margin-top:6px;font-size:14px}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left}
+  th{background:var(--sky);color:var(--navy)}
+  .ac{border-left:4px solid var(--green);background:#f6fbf8;border-radius:10px;
+    padding:14px 16px;margin-top:12px}
+  .ac h4{margin:0 0 6px;color:var(--green);font-size:15px}
+  .gwt{font-size:13.5px}
+  .gwt b{color:var(--navy)}
+  .note{background:#fffaf0;border:1px dashed var(--amber);border-radius:10px;
+    padding:12px 16px;font-size:14px;margin-top:12px}
+  footer{text-align:center;color:#7a8794;font-size:12px;margin:26px 0 8px}
+  @media(max-width:640px){.flow{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <span class="tag">SA-1917 · Story · Super App (SA)</span>
+    <h1>กำหนดจำนวนเงินทำรายการ เพื่อแจ้งเตือนให้ Square Position</h1>
+    <p>ตั้งค่า "จำนวนเงินขั้นต่ำ" ของการจอง Forward เพื่อ Alert ให้ส่วนค้าฯ (BU) ทราบ และทำการ square position ได้ทันที</p>
+    <div class="meta">
+      <span>📌 สถานะ: Backlog</span>
+      <span>⚙️ Priority: Medium</span>
+      <span>🙍 Reporter: Supreeya S.</span>
+      <span>📅 สร้าง: 5 มิ.ย. 2026</span>
+    </div>
+  </header>
+
+  <!-- context -->
+  <div class="card">
+    <h2><span class="ic">💡</span> Square Position คืออะไร?</h2>
+    <p class="lead">เป็นข้อกำหนดที่ธนาคารต้องปฏิบัติตาม: เมื่อรับจองซื้อ/ขายเงินตราต่างประเทศจากลูกค้า
+      ธนาคารต้องไป "ทำรายการตรงข้าม" ในตลาดด้วย <b>จำนวน (amount) และระยะเวลา (tenor) ที่เท่ากัน</b>
+      เพื่อให้สิ้นวันธนาคารมีความเสี่ยงค่าเงิน (gap) น้อยที่สุด หรือไม่มีเลย</p>
+
+    <div class="flow">
+      <div class="box buy">
+        <h3><span class="pill g">PURCHASE</span> รับซื้อจากลูกค้า</h3>
+        <div>ลูกค้า <b>ผู้ส่งออก</b> ขายเงินตปท. ให้ธนาคาร</div>
+        <div class="arrow">➡️ ธนาคารนำก้อนนี้ไป <b>ขายล่วงหน้า</b> ในตลาดภายในวัน</div>
+      </div>
+      <div class="box sell">
+        <h3><span class="pill a">SELL</span> ขายให้ลูกค้า</h3>
+        <div>ลูกค้า <b>ผู้นำเข้า</b> ซื้อเงินตปท. จากธนาคาร</div>
+        <div class="arrow">➡️ ธนาคารไป <b>ซื้อล่วงหน้า</b> สกุล/จำนวนเท่ากันในตลาด</div>
+      </div>
+    </div>
+    <div class="note">💬 หลาย transaction สามารถรวบรวมไปทำพร้อมกันได้ เพื่อลดต้นทุนการดำเนินการ</div>
+  </div>
+
+  <!-- goal -->
+  <div class="card">
+    <h2><span class="ic">🎯</span> เป้าหมายของงานนี้</h2>
+    <p class="gwt">
+      <b>As a</b> ผู้พัฒนาระบบ / BU<br>
+      <b>I want</b> กำหนดจำนวนเงินที่ลูกค้าจอง Forward เพื่อใช้ Alert ให้ BU ทราบ<br>
+      <b>So that</b> BU ทราบการทำรายการ และ square position ได้ทันทีที่ลูกค้าจอง Forward
+    </p>
+  </div>
+
+  <!-- conditions -->
+  <div class="card">
+    <h2><span class="ic">🔔</span> เงื่อนไขการแจ้งเตือนที่ BU ต้องการ</h2>
+    <div class="cond">
+      <div class="row">
+        <div class="num">1</div>
+        <div><b>ต่อรายการ (per transaction)</b><br>
+          แจ้งเตือนเมื่อมูลค่าแต่ละรายการ <span class="amt">≥ USD 500,000</span> (หรือเทียบเท่า)</div>
+      </div>
+      <div class="row">
+        <div class="num">2</div>
+        <div><b>ยอดรวมสะสม (aggregate)</b><br>
+          แจ้งเตือนเมื่อรวมหลายรายการได้ <span class="amt">= USD 1,000,000</span>
+          เพื่อกันความเสี่ยงกรณีมีรายการเล็กๆ ทยอยเข้ามา</div>
+      </div>
+    </div>
+    <div class="note">
+      ⚠️ <b>เงื่อนไขที่ 2 — สิ่งที่อยากได้เพิ่ม:</b> เวลานับยอดรวม ควร "หักรายการที่เคยแจ้งไปแล้ว" ออก
+      เพื่อไม่ให้แจ้งซ้ำ<br>หากทำแบบ real-time ไม่ได้ → ใช้เป็น <b>Schedule Report</b> แทน
+    </div>
+  </div>
+
+  <!-- acceptance criteria -->
+  <div class="card">
+    <h2><span class="ic">✅</span> Acceptance Criteria (จาก Jira)</h2>
+
+    <div class="ac">
+      <h4>AC1 · ตั้งค่าจำนวนเงินที่จะ Alert</h4>
+      <p class="gwt">หน้าตั้งค่าต้องมีช่องกรอกจำนวนเงินเป็น <b>USD</b> และบันทึกค่าได้สำเร็จ
+        (ใช้ค่าเดียวกับทุกรายการจอง)</p>
+    </div>
+
+    <div class="ac">
+      <h4>AC2 · แก้ไขจำนวนเงิน</h4>
+      <p class="gwt">เมื่อแก้ไขและกดบันทึก ระบบต้องอัปเดตเป็นค่าล่าสุด
+        และใช้ค่าใหม่ในการ Alert ทันที</p>
+    </div>
+
+    <div class="ac">
+      <h4>AC3 · นำค่าที่ตั้งไปใช้แจ้งเตือน</h4>
+      <p class="gwt">เมื่อลูกค้ายืนยันจอง Forward online และจำนวนเงิน <b>≥ USD 500,000</b>
+        (หรือเทียบเท่า) → ระบบส่ง <b>Email Alert</b> ให้ส่วนค้าฯ ทราบ</p>
+      <table>
+        <tr><th colspan="2">รายละเอียดที่ต้องมีใน Email</th></tr>
+        <tr><td>🏢 ชื่อบริษัท</td><td>💱 สกุลเงิน</td></tr>
+        <tr><td>💵 จำนวนเงิน</td><td>📈 Spot Rate</td></tr>
+        <tr><td>🎯 Final Rate</td><td>📅 Value Date</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- nice to have -->
+  <div class="card">
+    <h2><span class="ic">⭐</span> ส่วนที่จะ "Perfect" ขึ้น (Nice to have)</h2>
+    <ul>
+      <li>มีการ <b>Flag</b> ได้ว่ารายการไหนถูกนำไป square position แล้ว</li>
+      <li>เพื่อให้ตอน <b>EOD (End of Day)</b> สามารถกลับมาตรวจสอบได้ว่า
+        ทำการ square position ครบทุกรายการจริง</li>
+    </ul>
+  </div>
+
+  <footer>
+    สรุปจาก Jira SA-1917 + เอกสาร "for bu.txt" · เพื่อความเข้าใจร่วมกับ BU<br>
+    🤖 Generated with Claude Code
+  </footer>
+
+</div>
+</body>
+</html>

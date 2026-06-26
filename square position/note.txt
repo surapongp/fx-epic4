@@ -1,0 +1,80 @@
+
+
+
+
+
+
+
+
+
+
+
+
+ทำความเข้าใจ https://eximbankth.atlassian.net/browse/SA-1917
+เเละ C:\source\2569_claude\fx epic4\square position\for bu.txt
+
+สรุปมาให้กระชับ เข้าใจง่าย
+
+result ขอเป็น html artifact วางไว้ใน C:\source\2569_claude\fx epic4\square position
+
+
+
+
+################################
+นายทำดีมากนะ
+
+ทำความเข้าใจ C:\source\2569_claude\fx epic4\square position\SA-1917-summary.html
+
+สร้าง menu ใหม่ ต่อจาก "กลไก Forward" ชื่อว่า "SA-1917"
+
+ทีนี้ออกแบบหน้าจอที่ตอบโจทย์เเล้ววางไว้ที่ menu "SA-1917"
+
+ถ้าไม่เเน่ใจในโจทย์ถามได้
+
+
+
+
+
+################################
+นายทำดีมากนะ
+
+ปรับแก้นิดหน่อย C:\source\2569_claude\fx epic4\exim_forward_contract (1).html -> tab menu "SA-1917"
+- ระบบจะทำการรวมยอดอัตโนมัติ เเล้ว จึงเเจ้ง email
+- ในหน้าจอ Square Position Flag & EOD Reconcile ควรจะบอก group ที่รวมยอดด้วยเห็นด้วยไหม
+
+ถ้าไม่เเน่ใจในโจทย์ถามได้
+
+
+
+################################
+นายทำดีมากนะ
+
+ถามก่อนนะไม่ได้ให้แก้ code
+- ระบบจะทำการรวมยอดอัตโนมัติ เเล้ว จึงเเจ้ง email
+- ในหน้าจอ Square Position Flag & EOD Reconcile ควรจะบอก group ที่รวมยอดด้วยเห็นด้วยไหม
+
+ถ้าไม่เเน่ใจในโจทย์ถามได้
+
+
+แก้ code ได้เลย
+ถ้าไม่เเน่ใจในโจทย์ถามได้
+
+
+################################
+นายทำดีมากนะ
+
+ปรับแก้นิดหน่อย C:\source\2569_claude\fx epic4\exim_forward_contract (1).html -> tab menu "SA-1917"
+- ตาราง Square Position Flag & EOD Reconcile ทำให้สามารถ flag เป็น group ได้ด้วย
+- mocking เพิ่ม กลุ่มอื่นด้วย 
+
+
+ถ้าไม่เเน่ใจในโจทย์ถามได้
+
+
+
+################################
+นายทำดีมากนะ ชอบละ
+
+ปรับชื่อ tab จาก SA-1917 เป็น Square Position
+
+ถ้าไม่เเน่ใจในโจทย์ถามได้
