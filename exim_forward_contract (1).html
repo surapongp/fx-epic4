@@ -1036,11 +1036,18 @@ function fwd2AddBizDays(s,n,ccy){var d=dayjs(s),c=0;while(c<n){d=d.add(1,'day');
 function fwd2MaxEnd(startDate,ccy){var si=fwd2SpotInfo(startDate,ccy);return si?dayjs(si.spotVal).add(6,'month').format('YYYY-MM-DD'):'';}
 function fwd2FmtD(s){var dj=dayjs(s);return new Date(dj.year(),dj.month(),dj.date()).toLocaleDateString('th-TH',{day:'numeric',month:'short'});}
 
+/* === Spot dates — ดูเฉพาะวันหยุดไทยเท่านั้น (ข้อ 3) === */
+function fwd2IsBizTH(s){var w=dayjs(s).day();return w!==0&&w!==6&&!FWD2_HOL_TH[s];}
+function fwd2NextBizTH(s){var d=dayjs(s).add(1,'day');while(!fwd2IsBizTH(d.format('YYYY-MM-DD')))d=d.add(1,'day');return d.format('YYYY-MM-DD');}
+function fwd2AdjBizTH(s){return fwd2IsBizTH(s)?s:fwd2NextBizTH(s);}
+function fwd2AddBizDaysTH(s,n){var d=dayjs(s),c=0;while(c<n){d=d.add(1,'day');if(fwd2IsBizTH(d.format('YYYY-MM-DD')))c++;}return d.format('YYYY-MM-DD');}
+
 var _fwdSim2={ccy:'USD',side:'sell',startDate:'2026-01-28',tenor:null,endDate:'',clEnd:'',showHol:false,endErr:''};
 function fwd2SpotInfo(startDate,ccy){
   if(!startDate)return null;
-  var spotVal=fwd2AddBizDays(fwd2AdjBiz(startDate,ccy),2,ccy);            /* T+2 = Spot value date */
-  var spotIsEOM=dayjs(fwd2NextBiz(spotVal,ccy)).month()!==dayjs(spotVal).month(); /* T+2 = วันทำการสุดท้ายของเดือน → EOM */
+  /* Spot value date (T+2) นับเฉพาะวันทำการไทย + วันสิ้นสุดไม่ตรงวันหยุดไทย (ข้อ 3) */
+  var spotVal=fwd2AddBizDaysTH(fwd2AdjBizTH(startDate),2);
+  var spotIsEOM=dayjs(fwd2NextBizTH(spotVal)).month()!==dayjs(spotVal).month(); /* วันทำการ(ไทย)สุดท้ายของเดือน → EOM */
   return {spotVal:spotVal,spotIsEOM:spotIsEOM};
 }
 /* วันครบกำหนด default ของ tenor m (EOM-aware + Modified Following) */
@@ -1152,10 +1159,10 @@ function renderFwd2Sim(){
   var adjStart='',spotVal='',adjEnd='',maxMo=0,rawSpotStart='',spotIsEOM=false;
   if(inp&&inpE){
     rawSpotStart=addDay(inp);
-    adjStart=rawSpotStart;
-    spotVal=fwd2AddBizDays(fwd2AdjBiz(inp,ccy),2,ccy);
-    spotIsEOM=dayjs(fwd2NextBiz(spotVal,ccy)).month()!==dayjs(spotVal).month();
-    adjEnd=fwd2AdjBiz(inpE,ccy);
+    adjStart=fwd2AdjBizTH(rawSpotStart);   /* Spot start ต้องไม่ตรงวันหยุดไทย (ข้อ 3) */
+    var _si=fwd2SpotInfo(inp,ccy);
+    spotVal=_si.spotVal;spotIsEOM=_si.spotIsEOM;
+    adjEnd=fwd2AdjBiz(inpE,ccy);            /* วันสิ้นสุดสัญญา = วันทำการตามสกุล (คงเดิม) */
     var ms=Math.round((new Date(adjEnd)-new Date(spotVal))/30/24/3600/1000);
     maxMo=Math.max(0,Math.min(6,ms));
   } else if(inp){
@@ -1188,7 +1195,7 @@ function renderFwd2Sim(){
     var thSt='color:rgba(255,255,255,.4);font-weight:600;padding:4px 5px;border-bottom:1px solid rgba(255,255,255,.15);font-size:10px;';
     var tdSt='padding:5px 5px;border-bottom:1px solid rgba(255,255,255,.07);vertical-align:top;font-size:11px;';
 
-    var rawSpotVal=inp?dayjs(fwd2AdjBiz(inp,ccy)).add(2,'day').format('YYYY-MM-DD'):spotVal;
+    var rawSpotVal=inp?dayjs(fwd2AdjBizTH(inp)).add(2,'day').format('YYYY-MM-DD'):spotVal;
     var rows=
       '<tr style="background:rgba(255,255,255,.04);">'
       +'<td style="'+tdSt+'color:#F59E0B;font-weight:700;">Spot</td>'
@@ -1197,10 +1204,12 @@ function renderFwd2Sim(){
       +'<td style="'+tdSt+'text-align:right;">'+rateCell(cr,'Spot Rate')+'</td>'
       +'<td style="'+tdSt+'text-align:right;color:rgba(255,255,255,.55);">'+(dayjs(spotVal).diff(dayjs(adjStart),'day')+1)+'</td>' /* นับรวมวันเริ่มต้น (inclusive) */
       +'<td style="'+tdSt+'text-align:right;color:rgba(255,255,255,.3);">—</td>'
+      +'<td style="'+tdSt+'text-align:right;color:rgba(255,255,255,.3);">—</td>'
       +(isBuy?'<td style="'+tdSt+'text-align:right;color:rgba(255,255,255,.3);">—</td>':'')
       +'</tr>';
 
     var prevEnd=spotVal;
+    var avgNotes=[]; /* เก็บสูตร Swap(เฉลี่ย) ที่แทนค่าจริง ของงวดที่จองไม่เต็ม */
     for(var m=1;m<=maxMo;m++){
       var rowStart=addDay(prevEnd);
       var rawMonthEnd=spotIsEOM
@@ -1209,31 +1218,42 @@ function renderFwd2Sim(){
       var rowEnd=m===maxMo?adjEnd:fwd2AdjModFol(rawMonthEnd,ccy);
       var rawRowEnd=m===maxMo?inpE:rawMonthEnd;
 
-      var sw=fwd2Sw(ccy,m,side);                 /* sell → ค่าบวก (ข้อ 2.3) */
+      /* === จองไม่เต็ม Period → เฉลี่ย Swap Point (= Fwd Point) ตามจำนวนวัน ===
+         Swap(เฉลี่ย) = ROUND( ((Swap งวดนี้ − Swap งวดก่อน) ÷ วันเต็มงวดนี้) × วันจริง + Swap งวดก่อน , 4) */
+      var fullEnd=fwd2AdjModFol(rawMonthEnd,ccy);                 /* จุดครบกำหนดเต็มงวด (m เดือน) */
+      var swPrev=m>1?fwd2Sw(ccy,m-1,side):0;                      /* Swap งวดก่อน (งวดแรก = spot = 0) */
+      var swFull=fwd2Sw(ccy,m,side);                             /* Swap งวดนี้ (เต็มงวด) */
+      var fullDays=dayjs(fullEnd).diff(dayjs(rowStart),'day')+1;  /* วันเต็มงวดนี้ (inclusive) */
+      var actualDays=dayjs(rowEnd).diff(dayjs(rowStart),'day')+1; /* วันจริง (inclusive) */
+      var sw=fullDays>0?Math.round((((swFull-swPrev)/fullDays)*actualDays+swPrev)*1e4)/1e4:swFull;
+      var partial=actualDays<fullDays;                            /* งวดนี้จองไม่เต็ม */
       var swSign=sw>=0?'+':'−';
       var fwdRt=cr+sw;
-      var fwdFormula='Spot + Fwd Pts['+m+'] ('+swSign+Math.abs(sw).toFixed(dp)+')';
+      var fwdFormula='Spot + Fwd Pts['+m+'] ('+swSign+Math.abs(sw).toFixed(dp)+')'+(partial?' · เฉลี่ย '+actualDays+'/'+fullDays+' วัน':'');
+      if(partial)avgNotes.push('Tenor '+m+': ROUND( ( ('+swFull.toFixed(dp)+' − '+swPrev.toFixed(dp)+') ÷ '+fullDays+' ) × '+actualDays+' + '+swPrev.toFixed(dp)+' , 4 ) = '+sw.toFixed(dp));
 
       rows+='<tr>'
         +'<td style="'+tdSt+'color:rgba(255,255,255,.5);">'+m+'</td>'
         +'<td style="'+tdSt+'color:rgba(255,255,255,.8);">'+dateCell(rowStart,rowStart)+'</td>'
         +'<td style="'+tdSt+'color:rgba(255,255,255,.8);">'+dateCell(rawRowEnd,rowEnd)+(spotIsEOM&&m!==maxMo?eomBadge:'')+'</td>'
         +'<td style="'+tdSt+'text-align:right;">'+rateCell(fwdRt,fwdFormula)+'</td>'
-        +'<td style="'+tdSt+'text-align:right;color:rgba(255,255,255,.55);">'+(dayjs(rowEnd).diff(dayjs(rowStart),'day')+1)+'</td>' /* นับรวมวันเริ่มต้น (inclusive) */
-        +'<td style="'+tdSt+'text-align:right;color:rgba(255,255,255,.7);">'+(sw>=0?'+':'')+sw.toFixed(dp)+'</td>'
+        +'<td style="'+tdSt+'text-align:right;color:rgba(255,255,255,.55);">'+actualDays+'</td>' /* นับรวมวันเริ่มต้น (inclusive) */
+        +'<td style="'+tdSt+'text-align:right;color:rgba(255,255,255,.45);"'+(partial?' title="จองไม่เต็มงวด ('+actualDays+'/'+fullDays+')"':'')+'>'+fullDays+'</td>' /* วันเต็มงวดนี้ */
+        +'<td style="'+tdSt+'text-align:right;color:rgba(255,255,255,.7);"'+(partial?' title="เฉลี่ยตามจำนวนวัน '+actualDays+'/'+fullDays+' (เต็มงวด='+(swFull>=0?'+':'')+swFull.toFixed(dp)+')"':'')+'>'+(sw>=0?'+':'')+sw.toFixed(dp)+(partial?' <span style="font-size:8px;color:#FBBF24;">~เฉลี่ย</span>':'')+'</td>'
         +(isBuy?'<td style="'+tdSt+'text-align:right;color:rgba(255,255,255,.7);">+'+ttMk.toFixed(dp)+'</td>':'') /* T/T MARK UP เฉพาะซื้อ (ข้อ 2.2) */
         +'</tr>';
-      tenors.push({m:m,start:rowStart,end:rowEnd,fwd:fwdRt,sw:sw});
+      tenors.push({m:m,start:rowStart,end:rowEnd,fwd:fwdRt,sw:sw,partial:partial});
       prevEnd=rowEnd;
     }
-    /* ตาราง fwd point แต่ละเดือน — ต่อท้ายตาราง Tenor (ข้อ 3) */
-    var fpRows=tenors.map(function(t){
+    /* ตาราง fwd point แต่ละเดือน = master data (ค่าคงที่ ไม่ใช่ค่าเฉลี่ยรายสัญญา) — แสดงครบ M1..M6 */
+    var fpRows=FWD2_TENORS.map(function(mn){
+      var v=fwd2Sw(ccy,mn,side);   /* ค่า master จาก M.rates (sell แสดงบวก) — ไม่เปลี่ยนตามการจองไม่เต็มงวด */
       return '<tr>'
-        +'<td style="'+tdSt+'color:rgba(255,255,255,.7);">M'+t.m+'</td>'
-        +'<td style="'+tdSt+'text-align:right;color:'+rateColor+';font-weight:700;">'+(t.sw>=0?'+':'−')+Math.abs(t.sw).toFixed(dp)+'</td>'
+        +'<td style="'+tdSt+'color:rgba(255,255,255,.7);">M'+mn+'</td>'
+        +'<td style="'+tdSt+'text-align:right;color:'+rateColor+';font-weight:700;">'+(v>=0?'+':'−')+Math.abs(v).toFixed(dp)+'</td>'
         +'</tr>';
     }).join('');
-    var fpTbl='<div style="margin-top:14px;font-size:10px;font-weight:700;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Fwd Point แต่ละเดือน ('+ccy+')</div>'
+    var fpTbl='<div style="margin-top:14px;font-size:10px;font-weight:700;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Fwd Point แต่ละเดือน ('+ccy+') · master</div>'
       +'<table style="width:100%;border-collapse:collapse;">'
       +'<tr><th style="text-align:left;'+thSt+'">เดือน</th><th style="text-align:right;'+thSt+'">Fwd Point</th></tr>'
       +fpRows+'</table>';
@@ -1244,11 +1264,15 @@ function renderFwd2Sim(){
       +'<th style="text-align:left;'+thSt+'">วันสิ้นสุด</th>'
       +'<th style="text-align:right;'+thSt+'">Rate</th>'
       +'<th style="text-align:right;'+thSt+'">term</th>'
+      +'<th style="text-align:right;white-space:nowrap;'+thSt+'">วันเต็มงวดนี้</th>'
       +'<th style="text-align:right;'+thSt+'">PREMIUM/DISC.</th>'
       +(isBuy?'<th style="text-align:right;white-space:nowrap;'+thSt+'">T/T MARK UP</th>':'')
       +'</tr>'+rows+'</table>'
       +'<div style="margin-top:8px;font-size:9px;color:rgba(255,255,255,.28);line-height:1.7;">'
-        +'Forward Rate = Spot Rate + Fwd Pts[m]'
+        +'Forward Rate = Spot Rate + Fwd Pts[m]<br>'
+        +'Swap (เฉลี่ย) = ROUND( ( (Swap งวดนี้ − Swap งวดก่อน) ÷ วันเต็มงวดนี้ ) × วันจริง + Swap งวดก่อน , 4 )<br>'
+        +'<span style="color:rgba(255,255,255,.22);">* งวดก่อนของ tenor แรก = Spot (Swap = 0) · ใช้เมื่อจองไม่เต็มงวด</span>'
+        +(avgNotes.length?'<div style="margin-top:5px;color:#FBBF24;line-height:1.8;">'+avgNotes.join('<br>')+'</div>':'')
       +'</div>'
       +fpTbl;
 
