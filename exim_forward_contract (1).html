@@ -1281,20 +1281,20 @@ function renderFwd2Sim(){
     rightHtml='<div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Rate รายวันแต่ละ tenor (prorate)</div>'
       +'<div style="font-size:9px;color:rgba(255,255,255,.3);margin-bottom:10px;line-height:1.5;">Rate = Spot + Fwd Pts × (จำนวนวันจาก Spot value date / จำนวนวันรวมของ tenor) · ครบ tenor = Forward Rate เต็ม</div>';
     tenors.forEach(function(t){
-      var totalDays=dayjs(t.end).diff(dayjs(t.start),'day');
+      var totalDays=dayjs(t.end).diff(dayjs(t.start),'day')+1;  /* = term (นับรวมวันเริ่มต้น, inclusive) */
       var swStr=(t.sw>=0?'+':'−')+Math.abs(t.sw).toFixed(dp);
       var dayRows='',seq=0,d=dayjs(t.start),endD=dayjs(t.end);
       while(!d.isAfter(endD)){
         seq++;
         var ds=d.format('YYYY-MM-DD');
-        var elapsed=d.diff(dayjs(t.start),'day');
-        var rate=cr+t.sw*(totalDays>0?elapsed/totalDays:0);
+        var dayNo=d.diff(dayjs(t.start),'day')+1;                /* วันที่จาก Spot value date (1..term) — นับรวมวันเริ่มต้น */
+        var rate=cr+t.sw*(totalDays>0?dayNo/totalDays:0);        /* ครบ tenor (dayNo=term) → Forward Rate เต็ม */
         var hol=!fwd2IsBiz(ds,ccy);
         dayRows+='<tr'+(hol?' style="opacity:.4;"':'')+'>'
           +'<td style="'+dTdS+'color:rgba(255,255,255,.4);">'+seq+'</td>'
           +'<td style="'+dTdS+'color:rgba(255,255,255,.8);">'+fmtD(ds)+'</td>'
           +'<td style="'+dTdS+'color:'+rateColor+';font-weight:700;text-align:right;">'+fmtR(rate)+'</td>'
-          +'<td style="'+dTdS+'color:rgba(255,255,255,.3);">Spot '+swStr+'×'+elapsed+'/'+totalDays+'</td>'
+          +'<td style="'+dTdS+'color:rgba(255,255,255,.3);">Spot '+swStr+'×'+dayNo+'/'+totalDays+'</td>'
           +(isBuy?'<td style="'+dTdS+'color:'+rateColor+';font-weight:700;text-align:right;">'+fmtR(rate+ttMk)+'</td><td style="'+dTdS+'color:rgba(255,255,255,.3);">Sight Bill +'+ttMk.toFixed(dp)+'</td>':'') /* ราคาซื้อ T/T = Sight Bill + markup + สูตร (ข้อ 2.1) */
           +'</tr>';
         d=d.add(1,'day');
@@ -1757,6 +1757,24 @@ function hFwdDoc(){
       +'<div style="background:var(--bg2,rgba(0,0,0,.03));border:1px solid var(--bdr);border-radius:8px;padding:12px 14px;font-size:15px;font-weight:700;text-align:center;margin-bottom:8px">Forward Rate = Spot Rate + Forward Points</div>'
       +'<div style="color:var(--t2);font-size:13px;line-height:1.7">• เอาเรตวันนี้ (Spot) เป็นฐาน แล้วบวก/ลบส่วนต่างล่วงหน้าของเดือนนั้น<br>• Forward Points ต่างกันตามสกุลเงินและจำนวนเดือน<br>• แถว <strong>Spot</strong> ใช้เรตวันนี้ตรง ๆ (ไม่บวกอะไร)</div>'
     +'</div>'
+
+    /* Rate รายวัน (prorate) + จองไม่เต็มงวด */
+    +'<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bdr)">'
+      +'<div class="card-title" style="border-bottom:none;padding-bottom:0;margin-bottom:10px">Rate รายวัน (prorate) และการจองไม่เต็มงวด</div>'
+      +'<div style="color:var(--t2);font-size:13px;line-height:1.7;margin-bottom:8px">ภายในแต่ละ tenor เรตจะ<strong>ค่อย ๆ ขยับ</strong>จาก Spot ในวันแรก ไปจนเต็ม Forward Rate ในวันครบกำหนด (prorate ตามจำนวนวัน)</div>'
+      +'<div style="background:var(--bg2,rgba(0,0,0,.03));border:1px solid var(--bdr);border-radius:8px;padding:12px 14px;font-size:14px;font-weight:700;text-align:center;margin-bottom:8px">Rate รายวัน = Spot + Forward Points × ( วันที่ ÷ จำนวนวันรวมของงวด )</div>'
+      +'<div style="color:var(--t2);font-size:13px;line-height:1.7">'
+        +'• <strong>การนับวัน นับรวมวันเริ่มต้น</strong> (inclusive) — เช่น 29–30 ม.ค. = 2 วัน<br>'
+        +'• “วันที่” = ลำดับวันนับจาก Spot value date (วันแรก = 1) · “จำนวนวันรวมของงวด” = term (จำนวนวันของงวดนั้น)<br>'
+        +'• วันครบกำหนด (วันที่ = term) → ได้ <strong>Forward Rate เต็ม</strong>พอดี'
+      +'</div>'
+      +'<div class="alert warn" style="margin-top:12px">'+ic('warn')+'<div><strong>จองไม่เต็มงวด:</strong> ถ้าวันสิ้นสุดไม่ตรงจุดครบเดือนพอดี ต้อง<strong>เฉลี่ย Swap Point</strong> (Swap Point = Forward Points คือสิ่งเดียวกัน) ตามจำนวนวัน</div></div>'
+      +'<div style="background:var(--bg2,rgba(0,0,0,.03));border:1px solid var(--bdr);border-radius:8px;padding:12px 14px;font-size:13px;font-weight:700;text-align:center;margin-bottom:8px;line-height:1.6">Swap (เฉลี่ย) = ROUND( ( (Swap งวดนี้ − Swap งวดก่อน) ÷ วันเต็มงวดนี้ ) × วันจริง + Swap งวดก่อน , 4 )</div>'
+      +'<div style="color:var(--t2);font-size:13px;line-height:1.7">• <strong>Swap งวดก่อน</strong> ของ tenor แรก = Spot (= 0) · <strong>วันเต็มงวดนี้</strong> = จำนวนวันถ้าจองเต็มถึงจุดครบเดือน · <strong>วันจริง</strong> = จำนวนวันที่จองจริง<br>• งวดที่จองเต็มจะได้ค่าเดิม (สูตรนี้ใช้เฉพาะงวดที่ไม่เต็ม)</div>'
+    +'</div>'
+
+    /* Spot holiday scope */
+    +'<div class="alert info" style="margin-top:16px">'+ic('info')+'<div><strong>วันหยุดของ Spot:</strong> วันเริ่มและวันสิ้นสุดของแถว <strong>Spot</strong> พิจารณา<strong>เฉพาะวันหยุดไทย</strong>เท่านั้น (ไม่รวมวันหยุดของสกุลเงินต่างประเทศ) · ส่วนวันสิ้นสุดของแต่ละ tenor ยังพิจารณาวันหยุดตามสกุลเงินตามปกติ</div></div>'
 
     /* Example */
     +'<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--bdr)">'
