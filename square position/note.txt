@@ -201,7 +201,79 @@ tab : "จัดการรายการ v2" ปรับ text เป็น�
 
 
 อยากให้ปรับแก้
-tab : "จัดการรายการ v2" ปรับ text เป็นคำว่า adjust Underlying
+tab : "adjust Underlying" section ทะเบียน Reference No ทั้งหมด
+- section "ทะเบียน Reference No ทั้งหมด" ย้ายมาอยู่ด้านบน
+- section ทะเบียน Reference No ทั้งหมด เพิ่ม filter
+- ส่วนของ nested table (ตั๋ว) เเสดงเป็น section เเยกเเทน
+- ทะเบียน Reference No ทั้งหมด เพิ่ม column "คงเหลือ", "นอกระบบ"
+- คงเหลือ = max - นอกระบบ - ใช้ไปเเล้ว
+- "นอกระบบ", "max" สามารถแก้ไขได้
+
+ถ้าไม่เเน่ใจในโจทย์ถามได้
+
+
+
+อยากให้ปรับแก้
+tab : "adjust Underlying" section ทะเบียน Reference No ทั้งหมด
+- สกุล ใช้เป็นธง
+- เพิ่ม filter เอารายการที่ยังไม่ได้กำหนดค่า max
 
 
 ถ้าไม่เเน่ใจในโจทย์ถามได้
+
+
+
+
+
+อยากให้ปรับแก้
+tab : "adjust Underlying" section ทะเบียน Reference No ทั้งหมด
+- ตาราง Underlying ให้เห็น progress ของการ review ด้วย
+- เพิ่ม mockup Underlying ที่มีการกำหนดค่านอกระบบ เเละไม่มี ตั๋วที่ ref ถึงเลย เพราะ Underlying เหล่านี้มาจากการ migration
+
+ถ้าไม่เเน่ใจในโจทย์ถามได้
+
+
+
+
+
+อยากให้ปรับแก้
+tab : "adjust Underlying" section ทะเบียน Reference No ทั้งหมด
+- คำว่า migration เอาออก
+- แก้ไข จำนวน ต้องมีการ check ด้วยสิ ว่า เพียงพอไหม
+- ไม่มี Max (วงเงิน Ref) ก็ต้องแก้ Reference No ได้นะ 
+
+ถ้าไม่เเน่ใจในโจทย์ถามได้
+
+
+
+
+อยากให้ปรับแก้
+tab : Square Position -> ตั้งค่าเกณฑ์การแจ้งเตือน (AC1 / AC2)
+- เกณฑ์ ตรงนี้จะขึ้นอยู่กับว่าเราให้บริการวงเงิน อะไรบ้าง ในปีนี้ "USD", "CNY"
+
+- เเน่นอนการ Feed ก็ต้อง by สกุลของวงเงินที่ให้บริการ
+
+tab : Square Position -> Square Position Flag & EOD Reconcile
+- เพิ่ม filter
+- เพิ่ม mini dashboard สรุปรายวัน
+- เพิ่ม ปุ่ม export dashboard สรุปรายวัน
+
+
+
+
+
+อยากให้ปรับแก้
+tab : Square Position เเยก code ออกไปเป็นอีกไฟล์ 
+
+
+
+
+อยากให้ปรับแก้ C:\source\2569_claude\fx epic4\square-position.js
+
+1. ส่วนของ "ตั้งค่าเกณฑ์การแจ้งเตือน (AC1 / AC2)" เพิ่ม CNY ***ตรงนี้จะขึ้นอยู่กับว่าเราให้บริการวงเงิน อะไรบ้าง ในปีนี้ "USD", "CNY"
+2. เพิ่ม feed ของ CNY
+3. ตาราง Square Position Flag & EOD Reconcile
+    3.1 เพิ่ม filter
+    3.2 เพิ่ม mini dashboard สรุปรายวัน
+    3.3 เพิ่ม ปุ่ม export dashboard สรุปรายวัน ***ไม่ต้องออกปั้นไฟล์จริง
+
