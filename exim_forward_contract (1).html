@@ -284,6 +284,8 @@ table.st tr.hl td{border-bottom:none;font-size:15px;font-weight:800;color:var(--
     <a id="nav-fwddoc" onclick="goPhase(7)">กลไก Forward</a>
     <span class="sep">|</span>
     <a id="nav-sa1917" onclick="goPhase(8)">Square Position</a>
+    <span class="sep">|</span>
+    <a id="nav-sa1278" onclick="goPhase(10)">SA-1278</a>
   </div>
 </div>
 <div class="main">
@@ -475,18 +477,17 @@ function addDay(s){return dayjs(s).add(1,'day').format('YYYY-MM-DD');}
 function dayLabel(s){var w=dayjs(s).day();if(w===0)return'วันอาทิตย์';if(w===6)return'วันเสาร์';if(HOLIDAYS[s])return'วันหยุดธนาคาร';return'';}
 /* Reference DB */
 var REF_DB={
-  'INV-2024-0012':{ccy:'USD',total:500000,used:200000,desc:'Invoice สินค้าอุตสาหกรรม'},
-  'INV-2024-0018':{ccy:'USD',total:800000,used:0,desc:'Invoice ส่งออกอาหาร'},
-  'LC-2024-0003':{ccy:'USD',total:1200000,used:400000,desc:'Letter of Credit นำเข้า'},
-  'PO-2024-0031':{ccy:'EUR',total:300000,used:100000,desc:'Purchase Order EU'},
-  'INV-2024-0025':{ccy:'CNY',total:2000000,used:1800000,desc:'Invoice ส่งออก CNY'},
+  'INV-2024-0012':{ccy:'USD',total:500000,used:200000,desc:'Invoice สินค้าอุตสาหกรรม',cust:'C00124567'},
+  'INV-2024-0018':{ccy:'USD',total:800000,used:0,desc:'Invoice ส่งออกอาหาร',cust:'C00124567'},
+  'LC-2024-0003':{ccy:'USD',total:1200000,used:400000,desc:'Letter of Credit นำเข้า',cust:'C00124567'},
+  'PO-2024-0031':{ccy:'EUR',total:300000,used:100000,desc:'Purchase Order EU',cust:'C00124567'},
+  'INV-2024-0025':{ccy:'CNY',total:2000000,used:1800000,desc:'Invoice ส่งออก CNY',cust:'C00124567'},
   /* --- Underlying ยกมาจากระบบเดิม: มีค่า "นอกระบบ" + ยังไม่มีตั๋ว/สัญญาใดอ้างถึง --- */
-  'MIG-2566-0001':{ccy:'USD',total:600000,used:0,desc:'Invoice ยกมาจากระบบเดิม'},
-  'MIG-2566-0002':{ccy:'EUR',total:400000,used:0,desc:'Purchase Order ยกมาจากระบบเดิม'},
-  'MIG-2566-0003':{ccy:'CNY',total:1500000,used:0,desc:'L/C ยกมาจากระบบเดิม'}
+  'MIG-2566-0001':{ccy:'USD',total:600000,used:0,desc:'Invoice ยกมาจากระบบเดิม',cust:'C00124567'},
+  'MIG-2566-0002':{ccy:'EUR',total:400000,used:0,desc:'Purchase Order ยกมาจากระบบเดิม',cust:'C00124567'},
+  'MIG-2566-0003':{ccy:'CNY',total:1500000,used:0,desc:'L/C ยกมาจากระบบเดิม',cust:'C00124567'}
 };
-/* ค่า "นอกระบบ" เริ่มต้นของ Underlying ที่ยกมาจากระบบเดิม */
-var EMP2_REF_EXT_SEED={'MIG-2566-0001':250000,'MIG-2566-0002':150000,'MIG-2566-0003':900000};
+/* === Adjust Underlying (phase 9): EMP2_REF_EXT_SEED — ย้ายไปไฟล์ adjust-underlying.js === */
 /* เอกสารของแต่ละ Reference — ทุก Underlying ต้องมีเอกสารแนบ (รวม ref ที่ยังไม่ลงทะเบียน) */
 var REF_DOCS={
   'INV-2024-0012':[{type:'Invoice',name:'INV-2024-0012.pdf',size:'248 KB'},{type:'Packing List',name:'PL-0012.pdf',size:'120 KB'}],
@@ -502,29 +503,24 @@ var REF_DOCS={
 function lookupRef(no){if(!no)return null;return REF_DB[no.trim().toUpperCase()]||null;}
 var BOOKINGS=[
   {ref:'FWD-2026-100001',ccy:'USD',amt:500000,rate:36.4200,maturity:'2026-09-01',clId:'CL-2024-001',side:'sell',
-   ul:[{ref:'INV-2024-0012',ccy:'USD',amt:300000},{ref:'INV-2024-0018',ccy:'USD',amt:200000}],ulHistory:[]},
+   cust:'C00124567',ul:[{ref:'INV-2024-0012',ccy:'USD',amt:300000},{ref:'INV-2024-0018',ccy:'USD',amt:200000}],ulHistory:[]},
   {ref:'FWD-2026-100002',ccy:'EUR',amt:200000,rate:39.6800,maturity:'2026-07-15',clId:'CL-2024-002',side:'buy',
-   ul:[{ref:'PO-2024-0031',ccy:'EUR',amt:200000}],ulHistory:[]},
+   cust:'C00124567',ul:[{ref:'PO-2024-0031',ccy:'EUR',amt:200000}],ulHistory:[]},
   {ref:'FWD-2026-100003',ccy:'USD',amt:1000000,rate:36.1500,maturity:'2026-08-30',clId:'CL-2024-001',side:'buy',
-   ul:[{ref:'LC-2024-0003',ccy:'USD',amt:800000},{ref:'NEW-REF-001',ccy:'USD',amt:200000}],ulHistory:[]},
-  /* --- สัญญาที่ 2 ที่ใช้ INV-2024-0012 ร่วมกับ FWD-2026-100001 (รวม 2 สัญญา) --- */
+   cust:'C00124567',ul:[{ref:'LC-2024-0003',ccy:'USD',amt:800000},{ref:'NEW-REF-001',ccy:'USD',amt:200000}],ulHistory:[]},
+  /* --- ลูกค้าคนละราย (C00987654) แต่ใช้ Reference No 'INV-2024-0012' ซ้ำกับ C00124567 → โชว์ combined key custcode+RefNo --- */
   {ref:'FWD-2026-100004',ccy:'USD',amt:150000,rate:36.3800,maturity:'2026-07-10',clId:'CL-2024-001',side:'sell',
-   ul:[{ref:'INV-2024-0012',ccy:'USD',amt:150000}],ulHistory:[]},
+   cust:'C00987654',ul:[{ref:'INV-2024-0012',ccy:'USD',amt:150000}],ulHistory:[]},
   /* --- 3 สัญญาที่ใช้ INV-2024-9999 ร่วมกัน (ref นี้ยังไม่มีใน REF_DB → ไม่มี max) --- */
   {ref:'FWD-2026-100005',ccy:'USD',amt:400000,rate:36.2500,maturity:'2026-08-15',clId:'CL-2024-001',side:'buy',
-   ul:[{ref:'INV-2024-9999',ccy:'USD',amt:400000}],ulHistory:[]},
+   cust:'C00124567',ul:[{ref:'INV-2024-9999',ccy:'USD',amt:400000}],ulHistory:[]},
   {ref:'FWD-2026-100006',ccy:'USD',amt:250000,rate:36.3000,maturity:'2026-09-20',clId:'CL-2024-001',side:'buy',
-   ul:[{ref:'INV-2024-9999',ccy:'USD',amt:250000}],ulHistory:[]},
+   cust:'C00124567',ul:[{ref:'INV-2024-9999',ccy:'USD',amt:250000}],ulHistory:[]},
   {ref:'FWD-2026-100007',ccy:'USD',amt:350000,rate:36.4000,maturity:'2026-10-05',clId:'CL-2024-001',side:'sell',
-   ul:[{ref:'INV-2024-9999',ccy:'USD',amt:350000}],ulHistory:[]},
+   cust:'C00124567',ul:[{ref:'INV-2024-9999',ccy:'USD',amt:350000}],ulHistory:[]},
 ];
 var ACTIVE_ADJUST=null;
-var EMP2_ADJUST=null;   /* state สำหรับ "จัดการรายการ v2" : {idx, ul:[{ref,ccy,amt}]} */
-var EMP2_OPEN=null;     /* index สัญญาที่กดเปิด review Underlying (master-detail) */
-var EMP2_REF_SEL=null;  /* refNo ที่เลือกเพื่อแสดงสัญญา/ตั๋วในการ์ดแยกด้านล่าง */
-var EMP2_REF_EDIT=null; /* refNo ที่กำลังแก้ค่า Max / นอกระบบ ในตารางทะเบียน Reference */
-var EMP2_REF_EXT=Object.assign({},EMP2_REF_EXT_SEED);  /* { refNo: number } ยอด "นอกระบบ" ของแต่ละ Reference (แก้ไขได้) · seed จากระบบเดิม */
-var EMP2_REF_FILTER={q:'',ccy:'',status:''}; /* ตัวกรองตารางทะเบียน Reference: ค้นหา + สกุล + สถานะ */
+/* === Adjust Underlying (phase 9): EMP2 state — ย้ายไปไฟล์ adjust-underlying.js === */
 
 /* === Square Position (SA-1917): state / data / saUsd / saEvaluate — ย้ายไปไฟล์ square-position.js === */
 /* Customer segment & spread */
@@ -625,6 +621,8 @@ function updateBC(){
   if(ns)ns.className=P.phase===8?'active':'';
   var ne2=document.getElementById('nav-emp2');
   if(ne2)ne2.className=P.phase===9?'active':'';
+  var ns78=document.getElementById('nav-sa1278');
+  if(ns78)ns78.className=P.phase===10?'active':'';
 }
 function renderWZ(){
   var wz=document.getElementById('wz');
@@ -2016,383 +2014,7 @@ function bindEmployee(){
   });
 }
 
-/* === จัดการรายการ v2 — ดูรายการจอง + ปรับ Underlying ภายหลัง === */
-/* mock เปิดดูเอกสารของ Reference */
-function emp2ViewDoc(ref,name,type,size){
-  alert('เปิดเอกสาร (ตัวอย่าง)\n\nReference : '+ref+'\nประเภท : '+type+'\nไฟล์ : '+name+'\nขนาด : '+size+'\n\n[mock preview]');
-}
-/* chips เอกสารของ Reference (ใช้ทั้งโหมดดู/แก้ไข) */
-function emp2DocChips(ref){
-  var ds=REF_DOCS[ref]||[];
-  if(!ds.length)return '<span style="font-size:11px;color:var(--t3)">ไม่มีเอกสาร</span>';
-  return ds.map(function(d){
-    return '<a onclick="emp2ViewDoc(\''+ref+'\',\''+d.name+'\',\''+d.type+'\',\''+d.size+'\')" title="'+d.name+' · '+d.size+'" style="display:inline-flex;align-items:center;gap:3px;background:var(--inf-bg);color:var(--inf);font-size:11px;padding:3px 8px;border-radius:6px;margin:2px 4px 2px 0;cursor:pointer;text-decoration:none">'+SVG.file+' '+d.type+'</a>';
-  }).join('');
-}
-/* คงเหลือของ Reference k ที่ "แถว j ของสัญญา bkIdx" ใช้ได้ = Max − นอกระบบ − ที่ใช้โดยรายการอื่น
-   · null = ไม่มี Max (เช็คความเพียงพอไม่ได้) · ul = รายการ underlying ปัจจุบันของสัญญานั้น (ใช้ค่าที่กำลังแก้) */
-function emp2RefRemainFor(k,bkIdx,ul,j){
-  var r=REF_DB[k]; if(!r)return null;
-  var others=0;
-  BOOKINGS.forEach(function(bk,bi){if(bi===bkIdx)return;bk.ul.forEach(function(u){if(u.ref===k)others+=parseFloat(u.amt)||0;});});
-  if(ul)ul.forEach(function(u,jj){if(jj!==j&&u.ref===k)others+=parseFloat(u.amt)||0;});
-  return r.total-emp2Ext(k)-others;
-}
-/* metric สรุปของสัญญา (ใช้ทั้งการ์ด grid และ detail) */
-function emp2Metrics(bk){
-  var editing=EMP2_ADJUST&&BOOKINGS[EMP2_ADJUST.idx]===bk;
-  var idx=editing?EMP2_ADJUST.idx:BOOKINGS.indexOf(bk);
-  var ul=editing?EMP2_ADJUST.ul:bk.ul;
-  var ulSum=ul.reduce(function(s,u){return s+(u.ccy===bk.ccy?(parseFloat(u.amt)||0):0);},0);
-  /* กติกา: ยอด Underlying รวม ต้อง >= ยอดจอง (มากกว่าหรือเท่ากับได้ · น้อยกว่าไม่ได้) */
-  return {ul:ul,ulSum:ulSum,short:ulSum<bk.amt-0.001,
-    anyOver:ul.some(function(u,j){var rem=emp2RefRemainFor(u.ref,idx,ul,j);return rem!=null&&(parseFloat(u.amt)||0)>rem+0.001;})};
-}
-/* เทียบ Underlying ที่กำลังแก้ กับของเดิม — true ถ้ามีการเปลี่ยนแปลงจริง */
-function emp2Changed(i){
-  var o=BOOKINGS[i].ul, n=EMP2_ADJUST.ul;
-  if(o.length!==n.length)return true;
-  for(var k=0;k<o.length;k++){
-    if(String(o[k].ref)!==String(n[k].ref))return true;
-    if(String(o[k].ccy)!==String(n[k].ccy))return true;
-    if((parseFloat(o[k].amt)||0)!==(parseFloat(n[k].amt)||0))return true;
-  }
-  return false;
-}
-/* การ์ดสรุปสัญญาในรูปแบบ grid */
-function emp2GridCard(bk,i){
-  var m=emp2Metrics(bk), active=EMP2_OPEN===i, reviewed=!!bk.reviewed;
-  var sumTag=m.short?'<span class="tag tag-er">'+ic('warn')+' Underlying ไม่พอ</span>':'';
-  var overTag=m.anyOver?'<span class="tag tag-er">'+ic('warn')+' เกินคงเหลือ Ref</span>':'';
-  var revTag=reviewed?'<span class="tag tag-ok">'+ic('check')+' review แล้ว</span>':'<span class="tag tag-wn">ยังไม่ review</span>';
-  return '<div style="border:1px solid '+(active?'var(--blue)':'var(--bdr)')+';border-left:4px solid '+(reviewed?'var(--ok)':'var(--bdr2)')+';border-radius:var(--rs);padding:14px;'+(active?'box-shadow:0 0 0 2px rgba(0,48,135,.12);':'')+'display:flex;flex-direction:column;gap:8px">'
-    +'<div style="display:flex;justify-content:space-between;align-items:center"><strong style="color:var(--blue);font-size:13px">'+bk.ref+'</strong>'
-      +'<span class="tag '+(bk.side==='sell'?'tag-er':'tag-inf')+'">'+(bk.side==='sell'?'ขาย':'ซื้อ')+'</span></div>'
-    +'<div style="font-size:19px;font-weight:700;line-height:1.1">'+fmt(bk.amt,0)+' <span style="font-size:12px;color:var(--t3);font-weight:400">'+bk.ccy+'</span></div>'
-    +'<div style="font-size:11px;color:var(--t3)">Rate '+fmtR(bk.rate,bk.ccy)+' · สิ้นสุด '+fmtTH(bk.maturity)+'</div>'
-    +'<div style="display:flex;flex-wrap:wrap;gap:4px">'+revTag+sumTag+overTag+'</div>'
-    +'<div style="font-size:11px;color:var(--t3)">'+bk.ul.length+' Underlying'+(bk.ulHistory.length?' · แก้ไข '+bk.ulHistory.length+' ครั้ง':'')+'</div>'
-    +'<button class="btn '+(active?'btn-p':'btn-s')+' emp2-open" data-i="'+i+'" style="width:100%;font-size:12px;margin-top:2px">'+ic('file')+' '+(active?'กำลังดูอยู่':'ดู / ปรับ Underlying')+'</button>'
-    +'<button class="btn '+(reviewed?'btn-s':'btn-p')+' emp2-review" data-i="'+i+'" style="width:100%;font-size:11px">'+(reviewed?ic('x')+' ยกเลิก review':ic('check')+' ทำเครื่องหมายว่า review แล้ว')+'</button>'
-  +'</div>';
-}
-/* panel รายละเอียด Underlying ของสัญญาที่เปิด */
-function emp2Detail(bk,i){
-  var editing=EMP2_ADJUST&&EMP2_ADJUST.idx===i, reviewed=!!bk.reviewed;
-  var m=emp2Metrics(bk), ul=m.ul;
-  var sumTag=m.short?'<span class="tag tag-er">'+ic('warn')+' Underlying น้อยกว่ายอดจอง · '+fmt(m.ulSum,0)+' / '+fmt(bk.amt,0)+' '+bk.ccy+'</span>':'';
-  var overTag=m.anyOver?'<span class="tag tag-er">'+ic('warn')+' มีรายการเกินคงเหลือ Ref</span>':'';
-
-  var rows=ul.map(function(u,j){
-    var r=REF_DB[u.ref], isOld=!!r, max=r?r.total:null;   /* isOld = Reference เดิมที่มีในระบบ */
-    var amt=parseFloat(u.amt)||0;
-    var rem=emp2RefRemainFor(u.ref,i,ul,j);   /* คงเหลือที่แถวนี้ใช้ได้ (null = ไม่มี Max → เช็คไม่ได้) */
-    var over=rem!=null&&amt>rem+0.001;
-    var maxCellView=isOld
-      ?fmt(max,0)+' '+r.ccy+(over?' <span style="color:var(--er);font-weight:700">· เกินคงเหลือ!</span>':'')
-      :'<span style="color:var(--t3)">ยังไม่กำหนด</span>';
-    /* Max แก้ที่ทะเบียน Reference เท่านั้น — ในนี้แสดง Max + คงเหลือที่ใช้ได้ */
-    var maxCell='<td style="text-align:right">'+maxCellView
-      +(rem!=null?'<div style="font-size:10px;color:'+(over?'var(--er)':'var(--t3)')+'">คงเหลือใช้ได้ '+fmt(rem,0)+'</div>':'')
-      +'<div style="font-size:10px;color:var(--t3)">แก้ที่ทะเบียน Reference</div></td>';
-    if(editing){
-      var amtStyle='text-align:right'+(over?';border-color:var(--er);background:var(--er-bg)':'');
-      /* แก้เลข Reference No ได้ทุกแถว (รวมถึง ref ที่มี Max) · สกุล: ref เดิมล็อกตามทะเบียน · ref ใหม่เลือกได้ */
-      var refCell='<td><input type="text" value="'+u.ref+'" class="emp2-inp" data-j="'+j+'" data-f="ref" style="text-transform:uppercase;max-width:160px"></td>';
-      var ccyCell=isOld
-        ?'<td>'+r.ccy+' <span style="font-size:10px;color:var(--t3)">(ตามทะเบียน)</span></td>'
-        :'<td><select class="emp2-inp" data-j="'+j+'" data-f="ccy">'+M.ccys.map(function(c){return '<option value="'+c+'"'+(u.ccy===c?' selected':'')+'>'+c+'</option>';}).join('')+'</select></td>';
-      return '<tr>'
-        +refCell
-        +ccyCell
-        +'<td><input type="text" inputmode="numeric" value="'+fmtAmt(u.amt)+'" class="emp2-inp" data-j="'+j+'" data-f="amt" style="'+amtStyle+'">'
-          +(over?'<div style="font-size:10px;color:var(--er);margin-top:3px">เกินคงเหลือ ('+fmt(rem,0)+')</div>':'')+'</td>'
-        +maxCell
-        +'<td style="font-size:11px">'+emp2DocChips(u.ref)+'</td>'
-      +'</tr>';
-    }
-    return '<tr>'
-      +'<td style="font-weight:600">'+u.ref+'</td>'
-      +'<td>'+(isOld?r.ccy:u.ccy)+'</td>'
-      +'<td style="text-align:right'+(over?';color:var(--er);font-weight:700':'')+'">'+fmt(u.amt,0)+'</td>'
-      +'<td style="text-align:right">'+maxCellView+'</td>'
-      +'<td>'+emp2DocChips(u.ref)+'</td>'
-    +'</tr>';
-  }).join('');
-
-  var changed=editing&&emp2Changed(i);
-  var ctrl=editing
-    ?'<div style="margin-top:10px"><span class="fl">เหตุผลในการแก้ไขจำนวน <span class="req">*</span></span><input type="text" id="emp2-reason" placeholder="ระบุเหตุผล..." value="'+(EMP2_ADJUST.reason||'')+'"></div>'
-      +'<div class="btn-row" style="margin-top:8px"><button class="btn btn-s emp2-cancel">ยกเลิก</button>'
-      +'<button class="btn btn-r emp2-save" data-i="'+i+'"'+(changed?'':' disabled style="opacity:.45;cursor:not-allowed"')+'>'+ic('check')+' บันทึกการแก้ไขจำนวน</button></div>'
-      +(changed?'':'<div style="font-size:11px;color:var(--t3);margin-top:4px;text-align:right">ยังไม่มีการเปลี่ยนแปลงข้อมูล</div>')
-    :'<div class="btn-row" style="margin-top:10px"><button class="btn btn-p emp2-edit" data-i="'+i+'" style="font-size:12px">'+ic('file')+' แก้ไขจำนวน</button></div>';
-
-  var hist=bk.ulHistory.length
-    ?'<div style="margin-top:10px;border-top:1px solid var(--bdr);padding-top:8px"><div style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:4px">ประวัติการแก้ไข Underlying</div>'
-      +bk.ulHistory.map(function(h){return '<div style="font-size:11px;color:var(--t2);margin-bottom:4px">'+new Date(h.ts).toLocaleString('th-TH')+' · '+h.by+' — '+h.note+' <span style="font-style:italic;color:var(--t3)">('+h.reason+')</span></div>';}).join('')
-    +'</div>'
-    :'';
-
-  return '<div style="padding:18px 20px">'
-    +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:14px;border-bottom:1px solid var(--bdr);padding-bottom:12px">'
-      +'<div><div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Review Underlying</div>'
-        +'<strong style="color:var(--blue);font-size:15px">'+bk.ref+'</strong>'
-        +'<div style="font-size:12px;color:var(--t3);margin-top:2px">'+(bk.side==='sell'?'ขาย':'ซื้อ')+' '+fmt(bk.amt,0)+' '+bk.ccy+' · Rate '+fmtR(bk.rate,bk.ccy)+' · สิ้นสุด '+fmtTH(bk.maturity)+'</div>'
-        +'<div style="margin-top:6px">'+(reviewed?'<span class="tag tag-ok">'+ic('check')+' review แล้ว</span>':'<span class="tag tag-wn">ยังไม่ review</span>')+'</div></div>'
-      +'<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'
-        +'<button class="btn '+(reviewed?'btn-s':'btn-p')+' emp2-review" data-i="'+i+'" style="font-size:12px;padding:5px 12px">'+(reviewed?ic('x')+' ยกเลิก review':ic('check')+' review แล้ว')+'</button>'
-        +'<button class="btn btn-s emp2-close" style="font-size:12px;padding:5px 12px">'+ic('x')+' ปิด</button>'
-      +'</div>'
-    +'</div>'
-    +((sumTag||overTag)?'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">'+sumTag+overTag+'</div>':'')
-    +'<div style="overflow-x:auto"><table class="rate-table"><thead><tr><th>Reference No.</th><th>สกุล</th><th style="text-align:right">จำนวน</th><th style="text-align:right">Max (วงเงิน Ref)</th><th>เอกสาร</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
-    +ctrl+hist
-  +'</div>';
-}
-/* หาสกุลของ Reference (จาก REF_DB หรือจาก underlying ที่ใช้ ref นั้น) */
-function emp2RefCcy(k){
-  if(REF_DB[k])return REF_DB[k].ccy;
-  var c='USD';
-  BOOKINGS.forEach(function(bk){bk.ul.forEach(function(u){if(u.ref===k)c=u.ccy;});});
-  return c;
-}
-/* ยอด "นอกระบบ" ของ Reference (default 0) */
-function emp2Ext(k){return parseFloat(EMP2_REF_EXT[k])||0;}
-/* แสดงสกุลเงินเป็นธงชาติ + รหัสสกุล */
-function ccyFlag(c){var F={USD:'🇺🇸',EUR:'🇪🇺',GBP:'🇬🇧',JPY:'🇯🇵',CNY:'🇨🇳',SGD:'🇸🇬',HKD:'🇭🇰',AUD:'🇦🇺',THB:'🇹🇭'};return (F[c]||'🏳️')+' '+c;}
-/* ตาราง Reference No ทั้งหมด — มีตัวกรอง (ค้นหา + สกุล + สถานะ) · แก้ Max/นอกระบบ · คลิกแถวเพื่อดูสัญญาในการ์ดแยก */
-function hEmp2RefTable(){
-  var refs={};
-  Object.keys(REF_DB).forEach(function(k){refs[k]=[];});
-  BOOKINGS.forEach(function(bk,bi){bk.ul.forEach(function(u){(refs[u.ref]=refs[u.ref]||[]).push({bi:bi,bk:bk,amt:parseFloat(u.amt)||0,ccy:u.ccy});});});
-  var allKeys=Object.keys(refs).sort();
-  /* ---- ตัวกรอง ---- */
-  var F=EMP2_REF_FILTER, q=(F.q||'').trim().toUpperCase();
-  function refCcy(k){var r=REF_DB[k];return r?r.ccy:(refs[k][0]?refs[k][0].ccy:'');}
-  var ccySet={};
-  allKeys.forEach(function(k){var c=refCcy(k);if(c)ccySet[c]=1;});
-  var ccyOpts=['<option value="">ทุกสกุล</option>'].concat(Object.keys(ccySet).sort().map(function(c){return '<option value="'+c+'"'+(F.ccy===c?' selected':'')+'>'+ccyFlag(c)+'</option>';})).join('');
-  var statusOpts=[['','ทุกสถานะ'],['nomax','ยังไม่กำหนด Max'],['over','เกิน Max'],['has','มีคงเหลือ'],['none','คงเหลือ ≤ 0']].map(function(o){return '<option value="'+o[0]+'"'+(F.status===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('');
-  function metrics(k){
-    var r=REF_DB[k], used=refs[k].reduce(function(s,x){return s+x.amt;},0);
-    var max=r?r.total:null, ext=emp2Ext(k);
-    var remain=max!=null?(max-ext-used):null;
-    return {r:r,used:used,max:max,ext:ext,remain:remain};
-  }
-  var shown=allKeys.filter(function(k){
-    var r=REF_DB[k];
-    if(q){var hay=(k+' '+(r?r.desc:'')).toUpperCase();if(hay.indexOf(q)<0)return false;}
-    if(F.ccy&&refCcy(k)!==F.ccy)return false;
-    if(F.status){
-      var m=metrics(k);
-      if(F.status==='nomax'&&m.max!=null)return false;
-      if(F.status==='over'&&!(m.max!=null&&m.used>m.max))return false;
-      if(F.status==='has'&&!(m.remain!=null&&m.remain>0))return false;
-      if(F.status==='none'&&!(m.remain!=null&&m.remain<=0))return false;
-    }
-    return true;
-  });
-  var rows=shown.map(function(k){
-    var m=metrics(k), r=m.r, uses=refs[k], used=m.used, max=m.max, ext=m.ext, remain=m.remain;
-    var over=max!=null&&used>max, negRemain=remain!=null&&remain<0, docs=(REF_DOCS[k]||[]).length;
-    var selected=EMP2_REF_SEL===k, editing=EMP2_REF_EDIT===k;
-    var caret='<span style="display:inline-block;width:14px;color:var(--t3);font-size:10px">'+(selected?'●':'▶')+'</span>';
-    var maxCell,extCell,actCell;
-    if(editing){
-      maxCell='<td style="text-align:right;white-space:nowrap"><input type="text" inputmode="numeric" class="emp2-refmax-inp" data-k="'+k+'" value="'+(max!=null?fmtAmt(max):'')+'" placeholder="กำหนด max" style="text-align:right;max-width:110px"></td>';
-      extCell='<td style="text-align:right;white-space:nowrap"><input type="text" inputmode="numeric" class="emp2-refext-inp" data-k="'+k+'" value="'+(ext?fmtAmt(ext):'')+'" placeholder="0" style="text-align:right;max-width:100px"></td>';
-      actCell='<td style="text-align:center;white-space:nowrap"><button class="btn btn-r emp2-refmax-save" data-k="'+k+'" style="font-size:10px;padding:3px 8px">'+ic('check')+' บันทึก</button> <button class="btn btn-s emp2-refmax-cancel" data-k="'+k+'" style="font-size:10px;padding:3px 8px">ยกเลิก</button></td>';
-    }else{
-      maxCell='<td style="text-align:right;white-space:nowrap">'+(max!=null?fmt(max,0):'<span style="color:var(--t3)">—</span>')+'</td>';
-      extCell='<td style="text-align:right;white-space:nowrap">'+(ext?fmt(ext,0):'<span style="color:var(--t3)">—</span>')+'</td>';
-      actCell='<td style="text-align:center;white-space:nowrap"><button class="btn btn-s emp2-refmax-edit" data-k="'+k+'" style="font-size:10px;padding:3px 8px">แก้ไข</button></td>';
-    }
-    var remainCell='<td style="text-align:right;white-space:nowrap'+(negRemain?';color:var(--er);font-weight:700':(remain!=null?';color:var(--ok);font-weight:600':''))+'">'+(remain!=null?fmt(remain,0):'<span style="color:var(--t3)">—</span>')+'</td>';
-    /* progress การ review ของสัญญาที่ใช้ Reference นี้ */
-    var revTot=uses.length, revDone=uses.filter(function(x){return x.bk.reviewed;}).length;
-    var revPct=revTot?Math.round(revDone/revTot*100):0, allRev=revTot>0&&revDone===revTot;
-    var reviewCell=revTot
-      ?'<td style="min-width:130px"><div style="display:flex;align-items:center;gap:6px">'
-        +'<div style="flex:1;min-width:56px;height:8px;background:var(--bdr);border-radius:5px;overflow:hidden"><div style="height:100%;width:'+revPct+'%;background:'+(allRev?'var(--ok)':'var(--blue)')+';transition:width .3s"></div></div>'
-        +'<span style="font-size:11px;font-weight:600;color:'+(allRev?'var(--ok)':'var(--t3)')+';white-space:nowrap">'+revDone+'/'+revTot+'</span>'
-      +'</div></td>'
-      :'<td style="text-align:center"><span class="tag tag-wn">ไม่มีสัญญา</span></td>';
-    return '<tr class="emp2-ref-row" data-k="'+k+'" style="cursor:pointer'+(selected?';background:var(--inf-bg)':'')+'">'
-      +'<td style="font-weight:600;color:var(--blue);white-space:nowrap">'+caret+' '+k+'</td>'
-      +'<td style="font-size:12px">'+(r?r.desc:'<span style="color:var(--t3)">(ไม่มีในระบบ)</span>')+'</td>'
-      +'<td style="white-space:nowrap">'+(refCcy(k)?ccyFlag(refCcy(k)):'—')+'</td>'
-      +maxCell
-      +extCell
-      +'<td style="text-align:right'+(over?';color:var(--er);font-weight:700':'')+'">'+fmt(used,0)+(over?' '+ic('warn'):'')+'</td>'
-      +remainCell
-      +'<td style="text-align:center">'+(docs?docs+' ไฟล์':'<span style="color:var(--t3)">—</span>')+'</td>'
-      +'<td style="text-align:center"><span class="tag tag-inf">'+uses.length+' สัญญา</span></td>'
-      +reviewCell
-      +actCell
-    +'</tr>';
-  }).join('');
-  if(!rows)rows='<tr><td colspan="11" style="text-align:center;color:var(--t3);padding:18px">— ไม่พบ Reference ตามเงื่อนไขที่กรอง —</td></tr>';
-  var hasFilter=!!(F.q||F.ccy||F.status);
-  var filterBar='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">'
-    +'<input type="text" id="emp2-ref-q" placeholder="ค้นหา Reference No / คำอธิบาย..." value="'+(F.q||'').replace(/"/g,'&quot;')+'" style="flex:1;min-width:200px">'
-    +'<select id="emp2-ref-ccy" style="max-width:140px">'+ccyOpts+'</select>'
-    +'<select id="emp2-ref-status" style="max-width:160px">'+statusOpts+'</select>'
-    +(hasFilter?'<button class="btn btn-s" id="emp2-ref-clear" style="font-size:12px">ล้างตัวกรอง</button>':'')
-    +'<span style="font-size:11px;color:var(--t3)">'+shown.length+' / '+allKeys.length+' รายการ</span>'
-  +'</div>';
-  return '<div class="card">'
-    +'<div class="card-title">'+ic('bld')+' ทะเบียน Reference No ทั้งหมด</div>'
-    +'<div class="alert info">'+ic('info')+'<div>รวมทุก Reference ในระบบ + ที่ถูกใช้ในสัญญา · <strong>คลิกที่แถว</strong> เพื่อดูสัญญาที่ใช้ (แสดงในการ์ดด้านล่าง) · <strong>แก้ค่า Max และ นอกระบบ ได้</strong> (ปุ่ม "แก้ไข") · <strong>คงเหลือ = Max − นอกระบบ − ใช้ไปแล้ว</strong> · คอลัมน์ <strong>Review</strong> = progress การ review ของสัญญาที่ใช้ Ref นั้น · บางรายการมีค่านอกระบบแต่ยังไม่มีตั๋วอ้างถึง</div></div>'
-    +filterBar
-    +'<div style="overflow-x:auto"><table class="rate-table"><thead><tr><th>Reference No.</th><th>คำอธิบาย</th><th>สกุล</th><th style="text-align:right">Max</th><th style="text-align:right">นอกระบบ</th><th style="text-align:right">ใช้ไปแล้ว</th><th style="text-align:right">คงเหลือ</th><th style="text-align:center">เอกสาร</th><th style="text-align:center">จำนวนสัญญา</th><th style="text-align:center">Review</th><th style="text-align:center">จัดการ</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
-  +'</div>';
-}
-/* การ์ดแยก — สัญญา/ตั๋วที่ใช้ Reference ที่เลือก (แทน nested table เดิม) */
-function hEmp2RefDetail(){
-  var k=EMP2_REF_SEL;
-  if(k==null)return '';
-  var uses=[];
-  BOOKINGS.forEach(function(bk,bi){bk.ul.forEach(function(u){if(u.ref===k)uses.push({bi:bi,bk:bk,amt:parseFloat(u.amt)||0,ccy:u.ccy});});});
-  var r=REF_DB[k];
-  var sub=uses.length
-    ?uses.map(function(x){
-      var rev=x.bk.reviewed?'<span class="tag tag-ok">'+ic('check')+' review แล้ว</span>':'<span class="tag tag-wn">ยังไม่ review</span>';
-      return '<tr>'
-        +'<td style="font-weight:600;color:var(--blue)">'+x.bk.ref+'</td>'
-        +'<td>'+(x.bk.side==='sell'?'ขาย':'ซื้อ')+'</td>'
-        +'<td style="text-align:right">'+fmt(x.amt,0)+' '+x.ccy+'</td>'
-        +'<td>'+fmtTH(x.bk.maturity)+'</td>'
-        +'<td>'+rev+'</td>'
-        +'<td style="text-align:center"><button class="btn btn-s emp2-goto" data-i="'+x.bi+'" style="font-size:11px;padding:4px 10px">'+ic('file')+' เปิด</button></td>'
-      +'</tr>';
-    }).join('')
-    :'<tr><td colspan="6" style="color:var(--t3)">— ยังไม่มีสัญญาใช้ —</td></tr>';
-  return '<div class="card">'
-    +'<div class="card-title" style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span>'+ic('file')+' สัญญา/ตั๋วที่ใช้ '+k+(r?' · '+r.desc:'')+'</span>'
-      +'<button class="btn btn-s emp2-refsel-close" style="font-size:12px;padding:4px 10px">'+ic('x')+' ปิด</button></div>'
-    +'<div style="overflow-x:auto"><table class="rate-table" style="margin:0"><thead><tr><th>สัญญา</th><th>ฝั่ง</th><th style="text-align:right">จำนวนที่ใช้</th><th>วันสิ้นสุด</th><th>สถานะ review</th><th style="text-align:center;width:90px"></th></tr></thead><tbody>'+sub+'</tbody></table></div>'
-  +'</div>';
-}
-function hEmp2(){
-  var grid=BOOKINGS.map(function(bk,i){return emp2GridCard(bk,i);}).join('');
-  var modal=(EMP2_OPEN!=null&&BOOKINGS[EMP2_OPEN])
-    ?'<div class="modal-ov show" id="emp2-modal"><div style="background:#fff;border-radius:var(--r);max-width:840px;width:94%;max-height:88vh;overflow:auto;box-shadow:0 8px 40px rgba(0,0,0,.25)">'
-      +emp2Detail(BOOKINGS[EMP2_OPEN],EMP2_OPEN)+'</div></div>'
-    :'';
-  return '<div class="sc">'
-    +hEmp2RefTable()
-    +hEmp2RefDetail()
-    +'<div class="card">'
-      +'<div class="card-title">'+ic('file')+' จัดการรายการจอง FX (v2) — ปรับ Underlying ภายหลัง</div>'
-      +'<div class="alert info">'+ic('info')+'<div>เลือกสัญญาจาก grid แล้วกด <strong>"ดู / ปรับ Underlying"</strong> เพื่อ review เอกสารและปรับจำนวน Underlying · ค่า Max แก้ที่ตาราง "ทะเบียน Reference No" ด้านบน · หากจำนวนเกิน Max ระบบเตือนและบล็อกการบันทึก</div></div>'
-      +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px">'+grid+'</div>'
-    +'</div>'
-  +modal+'</div>';
-}
-function bindEmp2(){
-  function $(id){return document.getElementById(id);}
-  function keepReason(){var r=$('emp2-reason');if(r&&EMP2_ADJUST)EMP2_ADJUST.reason=r.value;}
-  /* master-detail: เปิด/ปิด panel review Underlying */
-  document.querySelectorAll('.emp2-open').forEach(function(b){b.addEventListener('click',function(){
-    var i=+this.dataset.i; EMP2_OPEN=(EMP2_OPEN===i?null:i); EMP2_ADJUST=null; render();
-  });});
-  document.querySelectorAll('.emp2-close').forEach(function(b){b.addEventListener('click',function(){
-    EMP2_OPEN=null; EMP2_ADJUST=null; render();
-  });});
-  var ov=$('emp2-modal');
-  if(ov)ov.addEventListener('click',function(e){if(e.target===ov){EMP2_OPEN=null;EMP2_ADJUST=null;render();}});
-  /* status: employee กดว่า review สัญญานี้แล้ว */
-  document.querySelectorAll('.emp2-review').forEach(function(b){b.addEventListener('click',function(){
-    var i=+this.dataset.i; BOOKINGS[i].reviewed=!BOOKINGS[i].reviewed; render();
-  });});
-  /* คลิกแถว Reference → เลือกเพื่อแสดงสัญญา/ตั๋วในการ์ดแยกด้านล่าง */
-  document.querySelectorAll('.emp2-ref-row').forEach(function(tr){tr.addEventListener('click',function(){
-    var k=this.dataset.k; EMP2_REF_SEL=(EMP2_REF_SEL===k?null:k); render();
-  });});
-  /* ปิดการ์ดสัญญา/ตั๋วที่เลือก */
-  document.querySelectorAll('.emp2-refsel-close').forEach(function(b){b.addEventListener('click',function(e){
-    e.stopPropagation(); EMP2_REF_SEL=null; render();
-  });});
-  /* ตัวกรองตารางทะเบียน Reference (ค้นหา + สกุล + สถานะ) */
-  (function(){
-    var qi=$('emp2-ref-q');
-    if(qi)qi.addEventListener('input',function(){
-      EMP2_REF_FILTER.q=this.value; var pos=this.selectionStart; render();
-      var n=document.getElementById('emp2-ref-q'); if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}
-    });
-    var cc=$('emp2-ref-ccy'); if(cc)cc.addEventListener('change',function(){EMP2_REF_FILTER.ccy=this.value;render();});
-    var st=$('emp2-ref-status'); if(st)st.addEventListener('change',function(){EMP2_REF_FILTER.status=this.value;render();});
-    var cl=$('emp2-ref-clear'); if(cl)cl.addEventListener('click',function(){EMP2_REF_FILTER={q:'',ccy:'',status:''};render();});
-  })();
-  /* ปุ่ม "เปิด" ในการ์ดสัญญา/ตั๋ว → เปิด modal สัญญานั้น */
-  document.querySelectorAll('.emp2-goto').forEach(function(b){b.addEventListener('click',function(e){
-    e.stopPropagation(); EMP2_OPEN=+this.dataset.i; EMP2_ADJUST=null; render();
-  });});
-  document.querySelectorAll('.emp2-edit').forEach(function(b){b.addEventListener('click',function(){
-    var i=+this.dataset.i;
-    EMP2_ADJUST={idx:i,reason:'',ul:BOOKINGS[i].ul.map(function(u){return {ref:u.ref,ccy:u.ccy,amt:u.amt};})};
-    render();
-  });});
-  document.querySelectorAll('.emp2-cancel').forEach(function(b){b.addEventListener('click',function(){EMP2_ADJUST=null;render();});});
-  document.querySelectorAll('.emp2-inp').forEach(function(inp){inp.addEventListener('change',function(){
-    var j=+this.dataset.j,f=this.dataset.f;
-    if(f==='amt')EMP2_ADJUST.ul[j].amt=parseFloat(this.value.replace(/,/g,''))||0;
-    else if(f==='ref')EMP2_ADJUST.ul[j].ref=this.value.trim().toUpperCase();
-    else EMP2_ADJUST.ul[j][f]=this.value;
-    render();   /* re-render เพื่ออัปเดต max/เอกสาร/เตือนเกิน ตาม Reference ใหม่ */
-  });});
-  /* แก้ไขค่า Max และ นอกระบบ ที่ระดับ Reference (ในตาราง "ทะเบียน Reference No") */
-  document.querySelectorAll('.emp2-refmax-edit').forEach(function(b){b.addEventListener('click',function(e){
-    e.stopPropagation(); EMP2_REF_EDIT=this.dataset.k; render();
-  });});
-  document.querySelectorAll('.emp2-refmax-cancel').forEach(function(b){b.addEventListener('click',function(e){
-    e.stopPropagation(); EMP2_REF_EDIT=null; render();
-  });});
-  document.querySelectorAll('.emp2-refmax-inp,.emp2-refext-inp').forEach(function(inp){inp.addEventListener('click',function(e){e.stopPropagation();});});
-  document.querySelectorAll('.emp2-refmax-save').forEach(function(b){b.addEventListener('click',function(e){
-    e.stopPropagation();
-    var k=this.dataset.k;
-    var inp=document.querySelector('.emp2-refmax-inp[data-k="'+k+'"]');
-    var extInp=document.querySelector('.emp2-refext-inp[data-k="'+k+'"]');
-    var v=parseFloat((inp&&inp.value||'').replace(/,/g,''));
-    var ev=parseFloat((extInp&&extInp.value||'').replace(/,/g,''));
-    if(isNaN(v)||v<=0){alert('ค่า Max ต้องมากกว่า 0');return;}
-    if(isNaN(ev))ev=0;
-    if(ev<0){alert('ค่า "นอกระบบ" ต้องไม่ติดลบ');return;}
-    if(REF_DB[k]){REF_DB[k].total=v;}
-    else{REF_DB[k]={ccy:emp2RefCcy(k),total:v,used:0,desc:'(กำหนดจากทะเบียน Reference)'};}
-    EMP2_REF_EXT[k]=ev;
-    EMP2_REF_EDIT=null; render();
-  });});
-  document.querySelectorAll('.emp2-save').forEach(function(b){b.addEventListener('click',function(){
-    var i=+this.dataset.i, reason=($('emp2-reason').value||'').trim();
-    if(!reason){alert('กรุณาระบุเหตุผลในการแก้ไข');return;}
-    if(!EMP2_ADJUST.ul.length){alert('ต้องมี Underlying อย่างน้อย 1 แถว');return;}
-    if(EMP2_ADJUST.ul.some(function(u){return !u.ref||!(parseFloat(u.amt)>0);})){alert('กรุณากรอก Reference และจำนวน (มากกว่า 0) ให้ครบทุกแถว');return;}
-    /* บล็อกถ้าจำนวนเกิน "คงเหลือ" ของ Reference (Max − นอกระบบ − ที่สัญญาอื่นใช้) */
-    var over=EMP2_ADJUST.ul.map(function(u,j){return {u:u,rem:emp2RefRemainFor(u.ref,i,EMP2_ADJUST.ul,j)};})
-      .filter(function(x){return x.rem!=null&&(parseFloat(x.u.amt)||0)>x.rem+0.001;});
-    if(over.length){
-      alert('บันทึกไม่ได้ — มีจำนวนเกิน "คงเหลือ" ของ Reference:\n\n'
-        +over.map(function(x){return '• '+x.u.ref+' : '+fmt(parseFloat(x.u.amt)||0,0)+' > คงเหลือ '+fmt(x.rem,0);}).join('\n')
-        +'\n\nกรุณาลดจำนวน · เพิ่มค่า Max · หรือลดค่านอกระบบ ของ Reference นั้น');
-      return;
-    }
-    var bk=BOOKINGS[i];
-    /* กติกา: ยอด Underlying รวม ต้อง >= ยอดจอง (น้อยกว่าไม่ได้) */
-    var ulSum=EMP2_ADJUST.ul.reduce(function(s,u){return s+(u.ccy===bk.ccy?(parseFloat(u.amt)||0):0);},0);
-    if(ulSum<bk.amt-0.001){
-      alert('บันทึกไม่ได้ — ยอด Underlying รวม ('+fmt(ulSum,0)+' '+bk.ccy+') น้อยกว่ายอดจอง ('+fmt(bk.amt,0)+' '+bk.ccy+')\n\nยอด Underlying รวมต้องมากกว่าหรือเท่ากับยอดจอง');
-      return;
-    }
-    var oldL=bk.ul.map(function(u){return u.ref+' '+u.ccy+' '+fmt(u.amt,0);}).join(', ');
-    var newL=EMP2_ADJUST.ul.map(function(u){return u.ref+' '+u.ccy+' '+fmt(u.amt,0);}).join(', ');
-    bk.ulHistory.push({ts:Date.now(),by:'Employee (v2)',note:'['+oldL+'] → ['+newL+']',reason:reason});
-    bk.ul=EMP2_ADJUST.ul.map(function(u){var c=REF_DB[u.ref]?REF_DB[u.ref].ccy:u.ccy;return {ref:u.ref,ccy:c,amt:parseFloat(u.amt)||0};});
-    EMP2_ADJUST=null;render();
-  });});
-}
+/* === Adjust Underlying (phase 9): state / helpers / hEmp2 / bindEmp2 — ย้ายไปไฟล์ adjust-underlying.js === */
 
 /* === Square Position (SA-1917): saNotifyTag / hSA1917 / bindSA1917 — ย้ายไปไฟล์ square-position.js === */
 
@@ -2410,6 +2032,7 @@ function render(){
   if(P.phase===7){el.innerHTML=hFwdDoc();return;}
   if(P.phase===8){el.innerHTML=hSA1917();bindSA1917();return;}
   if(P.phase===9){el.innerHTML=hEmp2();bindEmp2();return;}
+  if(P.phase===10){el.innerHTML=hSA1278();bindSA1278();return;}
   var hMap=[null,h1,h2,h3,h4,h5];
   el.innerHTML=(hMap[P.step]||h1)();
   bindWizard();
@@ -2517,5 +2140,7 @@ render();
 
 </script>
 <script src="square-position.js"></script>
+<script src="adjust-underlying.js"></script>
+<script src="sa-1278.js"></script>
 </body>
 </html>

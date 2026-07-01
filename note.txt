@@ -530,3 +530,43 @@ tab กลไกการคำนวณ Forward Contract ฝาก update ห�
 
 
 
+
+
+แยก tab "Adjust Underlying" ออกมาเป็น ไฟล์ใหม่
+
+
+
+
+
+ปรับแก้ C:\source\2569_claude\fx epic4\adjust-underlying.js
+
+- section "จัดการรายการจอง FX (v2) — ปรับ Underlying ภายหลัง" disable
+- เอา column "เอกสาร", "คำอธิบาย" ออกไป
+- column "สกุลเงิน" เอา currency 2 digit ที่อยู่ข้างหน้าออกไป
+- column "นอกระบบ" ตัวอักษรใส่สีหน่อย
+- Underlying เพิ่ม column "custcode" ความจริงคือ Reference No อาจจะซ้ำก็เป็นได้ ต้องเอา custcode มา combind key
+
+
+ถ้าไม่เเน่ใจในโจทย์ถามได้
+
+
+
+ปรับแก้ C:\source\2569_claude\fx epic4\adjust-underlying.js
+- ตาราง "สัญญา/ตั๋วที่ใช้" เพิ่ม column "custcode"
+- modal "สัญญา" เพิ่ม column "custcode"
+
+ปรับแก้ C:\source\2569_claude\fx epic4\square-position.js
+- Email ผู้รับ (ส่วนค้าเงินฯ) ให้เเยก by currency
+
+ถ้าไม่เเน่ใจในโจทย์ถามได้
+
+
+
+
+
+
+ทำความเข้าใจ https://eximbankth.atlassian.net/browse/SA-1278
+- ทำ prototype ออกมาวางไว้ใน tab ใหม่ชื่อ "SA-1278"
+- code ของ tab นี้เเยกไฟล์ด้วย
+
+ถ้าไม่เเน่ใจในโจทย์ถามได้

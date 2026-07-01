@@ -26,7 +26,7 @@ var SA={
   ccys:['USD','CNY'],                        /* สกุลวงเงินที่ให้บริการในปีนี้ (เกณฑ์/feed อิงตามนี้) */
   perTxn:{USD:500000, CNY:3500000},          /* AC1: แจ้งเมื่อรายการ ≥ ค่านี้ (ในสกุลวงเงิน) */
   agg:   {USD:1000000,CNY:7000000},          /* AC2: แจ้งเมื่อยอดรวมสะสมถึงค่านี้ (ในสกุลวงเงิน) */
-  emails:'fxdesk@exim.go.th; treasury@exim.go.th',
+  emails:{USD:'fxdesk-usd@exim.go.th; treasury@exim.go.th', CNY:'fxdesk-cny@exim.go.th; treasury@exim.go.th'},   /* ผู้รับแยกตามสกุลวงเงิน */
   notified:{},                   /* id → true : แจ้งแบบรายการเดี่ยว (auto) */
   aggNotified:{},                /* id → true : ถูกรวมไปแจ้งแบบยอดรวม (auto, หักออกจากกองสะสม) */
   txnGroup:{},                   /* id → 'G-USD-1' : รายการนี้อยู่กลุ่มรวมยอดไหน */
@@ -132,14 +132,14 @@ function hSA1917(){
           +'<input type="text" inputmode="numeric" class="sa-agg" data-ccy="'+ccy+'" value="'+fmtAmt(SA.agg[ccy])+'">'
           +'<div style="font-size:11px;color:var(--t3);margin-top:4px">รายการย่อยรวมแล้วถึงค่านี้จึงแจ้ง</div></div>'
       +'</div>'
+      +'<div class="fg" style="margin-top:8px"><span class="fl">Email ผู้รับ (ส่วนค้าเงินฯ) — วงเงิน '+ccy+'</span>'
+        +'<input type="text" class="sa-emails" data-ccy="'+ccy+'" value="'+(SA.emails[ccy]||'')+'"></div>'
     +'</div>';
   }).join('');
   var settings='<div class="card">'
     +'<div class="card-title">'+ic('bld')+' ตั้งค่าเกณฑ์การแจ้งเตือน (AC1 / AC2)</div>'
     +'<div class="alert info">'+ic('info')+'<div>เกณฑ์ขึ้นกับ<strong>สกุลวงเงินที่ให้บริการในปีนี้</strong> — ปัจจุบันคือ <strong>'+SA.ccys.join(', ')+'</strong> · กำหนดจำนวนเงิน<strong>ในสกุลของวงเงิน</strong> (ไม่ใช่สกุลที่ลูกค้าจอง) · แก้แล้วกดบันทึก ระบบประมวลผลใหม่ทันที</div></div>'
     +cset
-    +'<div class="fg"><span class="fl">Email ผู้รับ (ส่วนค้าเงินฯ)</span>'
-      +'<input type="text" id="sa-emails" value="'+SA.emails+'"></div>'
     +'<div class="btn-row" style="margin-top:12px"><button class="btn btn-p" id="sa-save">'+ic('check')+' บันทึกการตั้งค่า</button></div>'
     +'<div id="sa-save-ok">'+(SA.saved?'<div class="alert success" style="margin-top:10px">'+ic('check')+'<div>บันทึกค่าล่าสุดแล้ว — ระบบประมวลผลใหม่ด้วยเกณฑ์นี้</div></div>':'')+'</div>'
   +'</div>';
@@ -190,7 +190,7 @@ function hSA1917(){
   +'</div>';
 
   /* ---- (3) Email ที่ระบบส่งอัตโนมัติ ---- */
-  function emailCard(title, accent, subj, list, totLabel){
+  function emailCard(title, accent, subj, list, totLabel, ccy){
     var erows=list.map(function(t){
       return '<tr>'
         +'<td style="font-weight:600">'+t.company+'</td>'
@@ -205,7 +205,7 @@ function hSA1917(){
     return '<div style="border:1px solid var(--bdr);border-left:3px solid '+accent+';border-radius:var(--rs);overflow:hidden;margin-bottom:12px">'
       +'<div style="background:var(--inf-bg);padding:10px 14px;font-size:12px;line-height:1.8">'
         +'<div style="font-weight:700;color:'+accent+';margin-bottom:2px">'+title+'</div>'
-        +'<div><strong>ถึง:</strong> '+SA.emails+'</div>'
+        +'<div><strong>ถึง:</strong> '+(SA.emails[ccy]||'')+'</div>'
         +'<div><strong>เรื่อง:</strong> '+subj+'</div>'
       +'</div>'
       +'<div style="padding:12px 14px">'
@@ -219,12 +219,12 @@ function hSA1917(){
   var mails='';
   SA_TXNS.forEach(function(t){
     if(SA.notified[t.id]) mails+=emailCard('Email · แจ้งเดี่ยว (วงเงิน '+t.line+')','var(--er)',
-      '[Square Position Alert] รายการจอง Forward '+t.company,[t],null);
+      '[Square Position Alert] รายการจอง Forward '+t.company,[t],null,t.line);
   });
   SA.groups.forEach(function(g){
     var list=g.ids.map(function(id){return SA_TXNS.filter(function(x){return x.id===id;})[0];});
     mails+=emailCard('Email · '+g.gid+' (รวมยอด '+list.length+' รายการ · วงเงิน '+g.ccy+')','var(--wn)',
-      '[Square Position Alert] ยอดรวมรายการจอง Forward ครบ '+fmt(SA.agg[g.ccy],0)+' '+g.ccy+' — '+g.gid,list,fmt(g.sum,0)+' '+g.ccy);
+      '[Square Position Alert] ยอดรวมรายการจอง Forward ครบ '+fmt(SA.agg[g.ccy],0)+' '+g.ccy+' — '+g.gid,list,fmt(g.sum,0)+' '+g.ccy,g.ccy);
   });
   var emailSec='<div class="card">'
     +'<div class="card-title">'+ic('mail')+' Email ที่ระบบส่งอัตโนมัติ</div>'
@@ -367,7 +367,8 @@ function bindSA1917(){
     document.querySelectorAll('.sa-perTxn').forEach(function(e){var v=parseFloat((e.value||'').replace(/,/g,''));if(isNaN(v)||v<=0)ok=false;np[e.dataset.ccy]=v;});
     document.querySelectorAll('.sa-agg').forEach(function(e){var v=parseFloat((e.value||'').replace(/,/g,''));if(isNaN(v)||v<=0)ok=false;na[e.dataset.ccy]=v;});
     if(!ok){alert('กรุณากรอกเกณฑ์ของทุกสกุลวงเงินให้ถูกต้อง (มากกว่า 0)');return;}
-    SA.perTxn=np; SA.agg=na; SA.emails=($('sa-emails').value||'').trim(); SA.saved=true;
+    var ne={};document.querySelectorAll('.sa-emails').forEach(function(e){ne[e.dataset.ccy]=(e.value||'').trim();});
+    SA.perTxn=np; SA.agg=na; SA.emails=ne; SA.saved=true;
     render();
   });
   document.querySelectorAll('.sa-sq').forEach(function(c){
