@@ -1,0 +1,22 @@
+@host = http://localhost:5080
+
+### รายการ endpoint
+GET {{host}}/
+
+### Spot value date (T+2) + EOM
+GET {{host}}/api/forward-v2/spot-info?tradeDate=2026-01-28
+
+### วันสิ้นสุดสูงสุด (spot + 6 เดือน)
+GET {{host}}/api/forward-v2/max-end?tradeDate=2026-01-28
+
+### ตาราง tenor 1..6 (วันครบกำหนด + ช่วงเลือกได้) — ใช้ทำ calendar
+GET {{host}}/api/forward-v2/tenors?tradeDate=2026-01-28&ccy=USD
+
+### ตรวจวันสิ้นสุดที่เลือก valid ไหม
+GET {{host}}/api/forward-v2/validate-end?tradeDate=2026-01-28&tenor=3&ccy=USD&endDate=2026-04-20
+
+### Schedule รายเดือน (ขาย) — จองไม่เต็มงวดสุดท้าย
+GET {{host}}/api/forward-v2/schedule?tradeDate=2026-01-28&endDate=2026-05-15&ccy=USD&side=sell
+
+### Schedule + rate รายวัน (prorate)
+GET {{host}}/api/forward-v2/schedule?tradeDate=2026-01-28&endDate=2026-05-15&ccy=USD&side=buy&includeDaily=true

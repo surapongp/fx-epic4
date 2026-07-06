@@ -41,8 +41,11 @@ function emp2Max(key){if(EMP2_REF_MAX[key]!=null)return EMP2_REF_MAX[key];var m=
 
 /* === จัดการรายการ v2 — ดูรายการจอง + ปรับ Underlying ภายหลัง === */
 /* mock เปิดดูเอกสารของ Reference */
-function emp2ViewDoc(ref,name,type,size){
-  alert('เปิดเอกสาร (ตัวอย่าง)\n\nReference : '+ref+'\nประเภท : '+type+'\nไฟล์ : '+name+'\nขนาด : '+size+'\n\n[mock preview]');
+function emp2ViewDoc(ref,name,type,size){
+  var a=document.createElement('a');
+  a.download=name;
+  a.href='data:application/octet-stream;charset=utf-8,'+encodeURIComponent('เปิดเอกสาร (ตัวอย่าง)\n\nReference : '+ref+'\nประเภท : '+type+'\nไฟล์ : '+name+'\nขนาด : '+size+'\n\n[mock preview]');
+  a.click();
 }
 /* chips เอกสารของ Reference (ใช้ทั้งโหมดดู/แก้ไข) */
 function emp2DocChips(ref){
@@ -132,7 +135,8 @@ function emp2Detail(bk,i){
         +ccyCell
         +'<td><input type="text" inputmode="numeric" value="'+fmtAmt(u.amt)+'" class="emp2-inp" data-j="'+j+'" data-f="amt" style="'+amtStyle+'">'
           +(over?'<div style="font-size:10px;color:var(--er);margin-top:3px">เกินคงเหลือ ('+fmt(rem,0)+')</div>':'')+'</td>'
-        +maxCell
+        +maxCell
+        +'<td>'+emp2DocChips(u.ref)+'</td>'
       +'</tr>';
     }
     return '<tr>'
@@ -140,7 +144,8 @@ function emp2Detail(bk,i){
       +'<td style="white-space:nowrap">'+cust+'</td>'
       +'<td>'+(isOld?master.ccy:u.ccy)+'</td>'
       +'<td style="text-align:right'+(over?';color:var(--er);font-weight:700':'')+'">'+fmt(u.amt,0)+'</td>'
-      +'<td style="text-align:right">'+maxCellView+'</td>'
+      +'<td style="text-align:right">'+maxCellView+'</td>'
+      +'<td>'+emp2DocChips(u.ref)+'</td>'
     +'</tr>';
   }).join('');
 
@@ -170,7 +175,7 @@ function emp2Detail(bk,i){
       +'</div>'
     +'</div>'
     +((sumTag||overTag)?'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">'+sumTag+overTag+'</div>':'')
-    +'<div style="overflow-x:auto"><table class="rate-table"><thead><tr><th>Reference No.</th><th>Custcode</th><th>สกุล</th><th style="text-align:right">จำนวน</th><th style="text-align:right">Max (วงเงิน Ref)</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+    +'<div style="overflow-x:auto"><table class="rate-table"><thead><tr><th>Reference No.</th><th>Custcode</th><th>สกุล</th><th style="text-align:right">จำนวน</th><th style="text-align:right">Max (วงเงิน Ref)</th><th>เอกสาร</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
     +ctrl+hist
   +'</div>';
 }

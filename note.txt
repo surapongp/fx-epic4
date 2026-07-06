@@ -570,3 +570,44 @@ tab กลไกการคำนวณ Forward Contract ฝาก update ห�
 - code ของ tab นี้เเยกไฟล์ด้วย
 
 ถ้าไม่เเน่ใจในโจทย์ถามได้
+
+
+
+
+
+
+
+
+อันนี้เเค่ถามนะไม่ได้ให้แก้อะไร
+- step 0 1 2 น่าจะรวบนะ เหตุผลดังนี้
+1. เพราะเป็น customer self service จองเเล้วออกสัญญา	เลย
+2. ไม่มี function ในการ draft การจอง
+
+ถ้าไม่เเน่ใจในโจทย์ถามได้
+
+
+
+
+tab sim -> Forward v2 
+- ทำความเข้าใจ logic คำนวน Tenor แต่ละเดือน -> เเล้วสร้างเป็น .net core method วางไว้ที่ folder "C:\source\2569_claude\fx epic4\net"
+
+ถ้าไม่เเน่ใจในโจทย์ถามได้
+
+
+
+
+
+
+
+ทำ api spec เเล้วไปวางใน tab ใหม่ หน่อย
+tab ใหม่ นี้ขอเป็น code เเยกไฟล์ออกจาก C:\source\2569_claude\fx epic4\exim_forward_contract (1).html นะ
+
+ถ้าไม่เเน่ใจในโจทย์ถามได้
+
+
+
+
+C:\source\2569_claude\fx epic4\exim_forward_contract (1).html tab "Adjust Underlying"
+
+ในหน้า detail ของสัญญาที่เป็น modal
+ในเเต่ละ Underlying จะต้องเเสดง matirial ด้วยนะ เมื่อกดก็จะเป็นการโหลดไฟล์ลงมา

@@ -48,10 +48,16 @@ var SA_TXNS=[
   {id:'FWD-2026-100028',company:'บจ. เมโทร อิเล็คทรอนิกส์ จำกัด',side:'sell',ccy:'SGD',amt:600000,line:'USD',spot:27.1500,final:27.0500,value:'2026-09-05'},
   /* ---- วงเงิน USD : รายการเดี่ยว (≥500k USD) ---- */
   {id:'FWD-2026-100026',company:'บจ. แปซิฟิก สตีล จำกัด',    side:'sell',ccy:'USD',amt:720000,  line:'USD',spot:36.4200,final:36.3100,value:'2026-09-28'},
-  /* ---- วงเงิน USD : รายการย่อย → ยังไม่ครบ 1M (ค้างในกองรอแจ้ง) ---- */
+  /* ---- วงเงิน USD : รายการย่อย → กองสะสมค้าง ~592,834 (ไม่ครบ 1M) ---- */
   {id:'FWD-2026-100029',company:'บจ. ดราก้อน เทรด จำกัด',   side:'buy', ccy:'USD',amt:350000,  line:'USD',spot:36.4200,final:36.2400,value:'2026-07-22'},
   {id:'FWD-2026-100030',company:'บจ. ซากุระ อิมพอร์ต จำกัด', side:'sell',ccy:'JPY',amt:20000000,line:'USD',spot:0.2438, final:0.2430, value:'2026-10-10'},
   {id:'FWD-2026-100031',company:'บจ. ยูโร เฟรช จำกัด',      side:'buy', ccy:'EUR',amt:100000,  line:'USD',spot:39.6800,final:39.5200,value:'2026-08-30'},
+  /* ---- ตัวอย่างกติกาใหม่: รายการนี้ (550k) เข้าเกณฑ์ต่อรายการเดี่ยวๆ (≥500k) แต่เพราะกองสะสมค้างอยู่ก่อนแล้ว (592,834)
+       จึงถูกรวมเข้ากองแทนที่จะแจ้งเดี่ยว → ยอดรวมทะลุ 1M พอดี มัดเป็นกลุ่ม G-USD-2
+       (เกณฑ์เก่า: จะแจ้งเดี่ยวทันทีแยกจากกอง — ลองสลับเงื่อนไข pool.length===0 ใน saEvaluate() ออกเพื่อเทียบ) ---- */
+  {id:'FWD-2026-100027',company:'บจ. เดลต้า อิเล็คทริค จำกัด',side:'sell',ccy:'USD',amt:550000,  line:'USD',spot:36.4200,final:36.3300,value:'2026-08-18'},
+  /* ---- วงเงิน USD : รายการย่อย → กองใหม่หลังมัดกลุ่ม G-USD-2 ยังไม่ครบ 1M (ค้างในกองรอแจ้ง) ---- */
+  {id:'FWD-2026-100033',company:'บจ. โนวา แมชชีนเนอรี่ จำกัด', side:'buy', ccy:'EUR',amt:200000,  line:'USD',spot:39.6800,final:39.5400,value:'2026-09-02'},
 
   /* ---- วงเงิน CNY : รายการเดี่ยว (≥3.5M CNY) → แจ้งเดี่ยวอัตโนมัติ ---- */
   {id:'FWD-2026-100040',company:'บจ. หนานหนิง เทรด จำกัด',   side:'sell',ccy:'CNY',amt:4200000, line:'CNY',spot:5.0200, final:5.0000, value:'2026-09-18'},
@@ -79,7 +85,9 @@ function saEvaluate(){
     var pool=[], poolSum=0, gCount=0;
     SA_TXNS.filter(function(t){return t.line===ccy;}).forEach(function(t){
       var amt=saLineAmt(t);
-      if(amt>=perTxn){ SA.notified[t.id]=true; return; }
+      /* เกณฑ์ต่อรายการ (AC1) ใช้ได้เฉพาะตอนไม่มีกองสะสมค้างอยู่ (pool ว่าง) —
+         ถ้ามีกองสะสมค้าง (ยังไม่ถึง AC2) รายการใหม่จะถูกรวมเข้ากองก่อนเสมอ ไม่ว่าจะเข้าเกณฑ์ต่อรายการหรือไม่ */
+      if(pool.length===0 && amt>=perTxn){ SA.notified[t.id]=true; return; }
       pool.push(t); poolSum+=amt;
       if(poolSum>=agg){
         gCount++; var gid='G-'+ccy+'-'+gCount, ids=pool.map(function(x){return x.id;});
