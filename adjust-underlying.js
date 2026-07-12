@@ -105,9 +105,39 @@ function emp2GridCard(bk,i){
     +'<div style="font-size:19px;font-weight:700;line-height:1.1">'+fmt(bk.amt,0)+' <span style="font-size:12px;color:var(--t3);font-weight:400">'+bk.ccy+'</span></div>'
     +'<div style="font-size:11px;color:var(--t3)">Rate '+fmtR(bk.rate,bk.ccy)+' · สิ้นสุด '+fmtTH(bk.maturity)+'</div>'
     +'<div style="display:flex;flex-wrap:wrap;gap:4px">'+revTag+sumTag+overTag+'</div>'
-    +'<div style="font-size:11px;color:var(--t3)">'+bk.ul.length+' Underlying'+(bk.ulHistory.length?' · แก้ไข '+bk.ulHistory.length+' ครั้ง':'')+'</div>'
+    +'<div style="font-size:11px;color:var(--t3)">'+bk.ul.length+' Underlying'+(bk.ulHistory.length?' · '+bk.ulHistory.length+' กิจกรรม':'')+'</div>'
     +'<button class="btn '+(active?'btn-p':'btn-s')+' emp2-open" data-i="'+i+'" style="width:100%;font-size:12px;margin-top:2px">'+ic('file')+' '+(active?'กำลังดูอยู่':'ดู / ปรับ Underlying')+'</button>'
     +'<button class="btn '+(reviewed?'btn-s':'btn-p')+' emp2-review" data-i="'+i+'" style="width:100%;font-size:11px">'+(reviewed?ic('x')+' ยกเลิก review':ic('check')+' ทำเครื่องหมายว่า review แล้ว')+'</button>'
+  +'</div>';
+}
+/* การ์ด 1 รายการในไทม์ไลน์ Activity — รองรับ type 'edit' (แก้ Underlying) และ 'review' (sign-off)
+   entry ของเดิม/seed ที่ไม่มี type ถือเป็น 'edit' (มี note แบบ "[เดิม] → [ใหม่]") */
+function emp2ActivityCard(h){
+  var when=new Date(h.ts).toLocaleString('th-TH');
+  var byBadge='<span style="font-size:10px;background:var(--inf-bg);color:var(--inf);padding:2px 8px;border-radius:10px;white-space:nowrap">'+h.by+'</span>';
+  var head=function(badge,accent){return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">'+badge
+    +'<span style="display:flex;gap:6px;align-items:center"><span style="font-size:11px;color:var(--t3)">'+when+'</span>'+byBadge+'</span></div>';};
+  if(h.type==='review'){
+    var on=!!h.reviewed, accent=on?'var(--ok)':'var(--wn)';
+    var badge=on?'<span class="tag tag-ok">'+ic('check')+' review แล้ว</span>':'<span class="tag tag-wn">'+ic('x')+' ยกเลิก review</span>';
+    return '<div style="border:1px solid var(--bdr);border-left:3px solid '+accent+';border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;background:#F8F9FB">'
+      +head(badge)+'<div style="margin:6px 0 0;font-size:12px;color:var(--t2)">'+(on?'ทำเครื่องหมายว่า review แล้ว':'ยกเลิกการ review')+'</div>'
+    +'</div>';
+  }
+  /* type 'edit' */
+  var seg=String(h.note||'').split('] → ['), hasDiff=seg.length>1;   /* note = "[เดิม] → [ใหม่]" */
+  var oldStr=hasDiff?seg[0].replace(/^\[/,''):'';
+  var newStr=hasDiff?seg[1].replace(/\]$/,''):String(h.note||'');
+  var body=hasDiff
+    ?'<div style="margin:6px 0;display:flex;flex-direction:column;gap:3px">'
+      +'<div style="display:flex;gap:6px;align-items:baseline"><span style="font-size:10px;color:var(--t3);min-width:30px;flex-shrink:0">เดิม</span><span style="font-size:12px;color:var(--t3);text-decoration:line-through">'+oldStr+'</span></div>'
+      +'<div style="display:flex;gap:6px;align-items:baseline"><span style="font-size:10px;color:var(--ok);font-weight:700;min-width:30px;flex-shrink:0">ใหม่</span><span style="font-size:12px;color:var(--t2);font-weight:600">'+newStr+'</span></div>'
+    +'</div>'
+    :'<div style="margin:6px 0;font-size:12px;color:var(--t2)">'+newStr+'</div>';
+  var editBadge='<span style="font-size:10px;background:var(--inf-bg);color:var(--blue);padding:2px 8px;border-radius:10px;font-weight:600">'+ic('file')+' แก้ไข Underlying</span>';
+  return '<div style="border:1px solid var(--bdr);border-left:3px solid var(--blue);border-radius:var(--rs);padding:9px 12px;margin-bottom:8px;background:#F8F9FB">'
+    +head(editBadge)+body
+    +(h.reason?'<div style="font-size:11px;color:var(--t2);margin-top:2px;background:#fff;border:1px dashed var(--bdr);border-radius:6px;padding:4px 8px"><span style="color:var(--t3)">เหตุผล:</span> '+h.reason+'</div>':'')
   +'</div>';
 }
 /* panel รายละเอียด Underlying ของสัญญาที่เปิด */
@@ -144,6 +174,7 @@ function emp2Detail(bk,i){
           +(over?'<div style="font-size:10px;color:var(--er);margin-top:3px">เกินคงเหลือ ('+fmt(rem,0)+')</div>':'')+'</td>'
         +maxCell
         +'<td>'+emp2DocChips(u.ref)+'</td>'
+        +'<td style="text-align:center"><button class="btn btn-s emp2-delitem" data-j="'+j+'" title="ลบแถวนี้" style="font-size:11px;padding:4px 8px;color:var(--er)">'+ic('x')+'</button></td>'
       +'</tr>';
     }
     return '<tr>'
@@ -158,15 +189,19 @@ function emp2Detail(bk,i){
 
   var changed=editing&&emp2Changed(i);
   var ctrl=editing
-    ?'<div style="margin-top:10px"><span class="fl">เหตุผลในการแก้ไขจำนวน <span class="req">*</span></span><input type="text" id="emp2-reason" placeholder="ระบุเหตุผล..." value="'+(EMP2_ADJUST.reason||'')+'"></div>'
+    ?'<div class="btn-row" style="margin-top:10px;justify-content:flex-start"><button class="btn btn-s emp2-additem" data-i="'+i+'" style="font-size:12px">'+ic('plus')+' เพิ่ม Underlying</button></div>'
+      +'<div style="margin-top:10px"><span class="fl">เหตุผลในการแก้ไข <span class="req">*</span></span><input type="text" id="emp2-reason" placeholder="ระบุเหตุผล..." value="'+(EMP2_ADJUST.reason||'')+'"></div>'
       +'<div class="btn-row" style="margin-top:8px"><button class="btn btn-s emp2-cancel">ยกเลิก</button>'
-      +'<button class="btn btn-r emp2-save" data-i="'+i+'"'+(changed?'':' disabled style="opacity:.45;cursor:not-allowed"')+'>'+ic('check')+' บันทึกการแก้ไขจำนวน</button></div>'
+      +'<button class="btn btn-r emp2-save" data-i="'+i+'"'+(changed?'':' disabled style="opacity:.45;cursor:not-allowed"')+'>'+ic('check')+' บันทึกการแก้ไข</button></div>'
       +(changed?'':'<div style="font-size:11px;color:var(--t3);margin-top:4px;text-align:right">ยังไม่มีการเปลี่ยนแปลงข้อมูล</div>')
-    :'<div class="btn-row" style="margin-top:10px"><button class="btn btn-p emp2-edit" data-i="'+i+'" style="font-size:12px">'+ic('file')+' แก้ไขจำนวน</button></div>';
+    :reviewed
+      ?'<div class="alert" style="margin-top:10px;background:var(--ok-bg);color:var(--ok)">'+ic('check')+'<div>รายการนี้ <strong>review แล้ว</strong> — เพิ่ม/แก้ไข Underlying ไม่ได้ · หากต้องแก้ไข กรุณากด <strong>ยกเลิก review</strong> ก่อน</div></div>'
+      :'<div class="btn-row" style="margin-top:10px"><button class="btn btn-p emp2-edit" data-i="'+i+'" style="font-size:12px">'+ic('file')+' แก้ไข Underlying</button></div>';
 
   var hist=bk.ulHistory.length
-    ?'<div style="margin-top:10px;border-top:1px solid var(--bdr);padding-top:8px"><div style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:4px">ประวัติการแก้ไข Underlying</div>'
-      +bk.ulHistory.map(function(h){return '<div style="font-size:11px;color:var(--t2);margin-bottom:4px">'+new Date(h.ts).toLocaleString('th-TH')+' · '+h.by+' — '+h.note+' <span style="font-style:italic;color:var(--t3)">('+h.reason+')</span></div>';}).join('')
+    ?'<div style="margin-top:14px;border-top:1px solid var(--bdr);padding-top:12px">'
+      +'<div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:8px">'+ic('file')+' ประวัติกิจกรรม (Activity) <span style="color:var(--t3);font-weight:400">· '+bk.ulHistory.length+' รายการ</span></div>'
+      +bk.ulHistory.slice().reverse().map(emp2ActivityCard).join('')   /* ใหม่สุดอยู่บน · ไม่ mutate array เดิม */
     +'</div>'
     :'';
 
@@ -182,7 +217,7 @@ function emp2Detail(bk,i){
       +'</div>'
     +'</div>'
     +((sumTag||overTag)?'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">'+sumTag+overTag+'</div>':'')
-    +'<div style="overflow-x:auto"><table class="rate-table"><thead><tr><th>Reference No.</th><th>Custcode</th><th>สกุล</th><th style="text-align:right">จำนวน</th><th style="text-align:right">Max (วงเงิน Ref)</th><th>เอกสาร</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+    +'<div style="overflow-x:auto"><table class="rate-table"><thead><tr><th>Reference No.</th><th>Custcode</th><th>สกุล</th><th style="text-align:right">จำนวน</th><th style="text-align:right">Max (วงเงิน Ref)</th><th>เอกสาร</th>'+(editing?'<th></th>':'')+'</tr></thead><tbody>'+rows+'</tbody></table></div>'
     +ctrl+hist
   +'</div>';
 }
@@ -461,17 +496,29 @@ function bindEmp2(){
   var ov=$('emp2-modal');
   if(ov)ov.addEventListener('click',function(e){if(e.target===ov){EMP2_OPEN=null;EMP2_ADJUST=null;render();}});
   document.querySelectorAll('.emp2-review').forEach(function(b){b.addEventListener('click',function(){
-    var i=+this.dataset.i; BOOKINGS[i].reviewed=!BOOKINGS[i].reviewed; render();
+    var i=+this.dataset.i, bk=BOOKINGS[i];
+    bk.reviewed=!bk.reviewed;
+    if(bk.reviewed&&EMP2_ADJUST&&EMP2_ADJUST.idx===i)EMP2_ADJUST=null;   /* review แล้ว → ออกจากโหมดแก้ไข (ล็อกการแก้) */
+    bk.ulHistory.push({ts:Date.now(),by:'Employee (v2)',type:'review',reviewed:bk.reviewed});   /* audit: log การ sign-off / ถอน review */
+    render();
   });});
   document.querySelectorAll('.emp2-goto').forEach(function(b){b.addEventListener('click',function(e){
     e.stopPropagation(); EMP2_OPEN=+this.dataset.i; EMP2_ADJUST=null; render();
   });});
   document.querySelectorAll('.emp2-edit').forEach(function(b){b.addEventListener('click',function(){
     var i=+this.dataset.i;
+    if(BOOKINGS[i].reviewed)return;   /* review แล้ว → ล็อกการแก้ไข */
     EMP2_ADJUST={idx:i,reason:'',ul:BOOKINGS[i].ul.map(function(u){return {ref:u.ref,ccy:u.ccy,amt:u.amt};})};
     render();
   });});
   document.querySelectorAll('.emp2-cancel').forEach(function(b){b.addEventListener('click',function(){EMP2_ADJUST=null;render();});});
+  /* เพิ่ม/ลบแถว Underlying ในโหมดแก้ไข (แถวใหม่ให้ default สกุล = สกุลของสัญญา · save เดิม validate ให้อยู่แล้ว) */
+  document.querySelectorAll('.emp2-additem').forEach(function(b){b.addEventListener('click',function(){
+    if(!EMP2_ADJUST)return; EMP2_ADJUST.ul.push({ref:'',ccy:BOOKINGS[+this.dataset.i].ccy,amt:''}); render();
+  });});
+  document.querySelectorAll('.emp2-delitem').forEach(function(b){b.addEventListener('click',function(){
+    if(!EMP2_ADJUST)return; EMP2_ADJUST.ul.splice(+this.dataset.j,1); render();
+  });});
   document.querySelectorAll('.emp2-inp').forEach(function(inp){inp.addEventListener('change',function(){
     var j=+this.dataset.j,f=this.dataset.f;
     if(f==='amt')EMP2_ADJUST.ul[j].amt=parseFloat(this.value.replace(/,/g,''))||0;
@@ -500,7 +547,7 @@ function bindEmp2(){
     }
     var oldL=bk.ul.map(function(u){return u.ref+' '+u.ccy+' '+fmt(u.amt,0);}).join(', ');
     var newL=EMP2_ADJUST.ul.map(function(u){return u.ref+' '+u.ccy+' '+fmt(u.amt,0);}).join(', ');
-    bk.ulHistory.push({ts:Date.now(),by:'Employee (v2)',note:'['+oldL+'] → ['+newL+']',reason:reason});
+    bk.ulHistory.push({ts:Date.now(),by:'Employee (v2)',type:'edit',note:'['+oldL+'] → ['+newL+']',reason:reason});
     bk.ul=EMP2_ADJUST.ul.map(function(u){var m2=emp2Master(bk.cust||EMP2_CUST_DEF,u.ref);var c=m2?m2.ccy:u.ccy;return {ref:u.ref,ccy:c,amt:parseFloat(u.amt)||0};});
     EMP2_ADJUST=null;render();
   });});
