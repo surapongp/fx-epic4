@@ -634,3 +634,13 @@ C:\source\2569_claude\fx epic4\adjust-underlying.js
 
 ถ้าไม่เเน่ใจในโจทย์ถามได้
 
+
+
+
+
+C:\source\2569_claude\fx epic4\adjust-underlying.js
+
+- นำเข้า Underlying — หลายรายการ flow ให้เป็นการ download template csv เเล้ว import เข้ามา
+- ต้องมีการเช็คข้อมูลซ้ำด้วยนะ
+
+ถ้าไม่เเน่ใจในโจทย์ถามได้
