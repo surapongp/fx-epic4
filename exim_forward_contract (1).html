@@ -288,6 +288,8 @@ table.st tr.hl td{border-bottom:none;font-size:15px;font-weight:800;color:var(--
     <a id="nav-sa1278" onclick="goPhase(10)">SA-1278</a>
     <span class="sep">|</span>
     <a id="nav-fwd2api" onclick="goPhase(11)">Forward v2 API</a>
+    <span class="sep">|</span>
+    <a id="nav-turnover" onclick="goPhase(12)">SA-1285 · รายงาน Turnover</a>
   </div>
 </div>
 <div class="main">
@@ -627,6 +629,8 @@ function updateBC(){
   if(ns78)ns78.className=P.phase===10?'active':'';
   var nfapi=document.getElementById('nav-fwd2api');
   if(nfapi)nfapi.className=P.phase===11?'active':'';
+  var ntr=document.getElementById('nav-turnover');
+  if(ntr)ntr.className=P.phase===12?'active':'';
 }
 function renderWZ(){
   var wz=document.getElementById('wz');
@@ -2038,6 +2042,7 @@ function render(){
   if(P.phase===9){el.innerHTML=hEmp2();bindEmp2();return;}
   if(P.phase===10){el.innerHTML=hSA1278();bindSA1278();return;}
   if(P.phase===11){el.innerHTML=hFwd2Api();bindFwd2Api();return;}
+  if(P.phase===12){el.innerHTML=hTurnover();bindTurnover();return;}
   var hMap=[null,h1,h2,h3,h4,h5];
   el.innerHTML=(hMap[P.step]||h1)();
   bindWizard();
@@ -2148,5 +2153,6 @@ render();
 <script src="adjust-underlying.js"></script>
 <script src="sa-1278.js"></script>
 <script src="forward-v2-api.js"></script>
+<script src="turnover-report.js"></script>
 </body>
 </html>
