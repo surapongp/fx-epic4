@@ -425,6 +425,7 @@ function hTurnover(){
         +'<button class="btn btn-s" id="tr-export" style="font-size:11px;padding:5px 12px">'+ic('dl')+' ดาวน์โหลด Excel</button>'
       +'</span>'
     +'</div>'
+    +'<div class="alert info" style="font-size:12px">'+ic('info')+'<div>รายการช่องทาง <span class="tag" style="background:var(--bg);color:var(--t3);font-size:10px">Offline</span> (ทำผ่านเจ้าหน้าที่/สาขา) เป็นตัวอย่างสำหรับ prototype — ระบบจะเริ่มดึงข้อมูล Offline มาแสดงจริงใน <strong>Go-live เฟส 2</strong> · เฟสแรกรายงานครอบคลุมเฉพาะธุรกรรมที่ทำผ่าน FX Online</div></div>'
     +'<div style="overflow-x:auto"><table class="rate-table" style="font-size:12px;min-width:1500px">'
       +'<thead><tr>'+TR_COLS.map(trTh).join('')+'</tr></thead>'
       +'<tbody>'+body+'</tbody>'
