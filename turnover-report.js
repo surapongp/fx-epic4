@@ -3,7 +3,7 @@
  * "หน้าจอเรียกดูรายงานของลูกค้า" → รายงานการจอง Forward Contract (Turnover)
  *
  * โจทย์ (As a ลูกค้า):
- *   - เลือกช่วงเวลา (From/To) · ดึงข้อมูลได้สูงสุด 2 ปี
+ *   - เลือกช่วงเวลา (From/To) · ย้อนหลังได้ถึง 1 ม.ค. ของปีที่แล้ว (เพดานตายตัว = ปีปฏิทิน−1)
  *   - กรองตามประเภทสัญญา (ซื้อ/ขาย) · สกุลเงิน · เลขที่สัญญา (ทุกเงื่อนไขใช้ร่วมกันแบบ AND)
  *   - เงื่อนไขมีผลเมื่อกดปุ่ม "ค้นหา" เท่านั้น (TR_DRAFT = ที่กำลังกรอก · TR_F = ที่ค้นแล้ว)
  *   - ตารางแสดงรายการ sort ได้ทุกคอลัมน์ (คลิกหัวคอลัมน์ · คลิกซ้ำสลับทิศ)
@@ -35,7 +35,16 @@ var TR_TYPES = {
   buy:  {label:'ซื้อล่วงหน้า',  short:'ซื้อ',  cls:'buy'},   /* ลูกค้าซื้อเงินตราต่างประเทศล่วงหน้า */
   sell: {label:'ขายล่วงหน้า',  short:'ขาย',  cls:'sell'}   /* ลูกค้าขายเงินตราต่างประเทศล่วงหน้า */
 };
-var TR_MAX_YEARS = 2;   /* ดึงข้อมูลย้อนหลังได้สูงสุด 2 ปี (ตาม AC) */
+/* วันที่เก่าสุดที่เลือกได้ = 1 ม.ค. ของ "ปีที่แล้ว" (ปีปฏิทินปัจจุบัน − 1)
+   เป็นเพดานตายตัว ไม่ใช่ช่วงเลื่อน — ยืนอยู่ปี 2569 เลือกย้อนได้ถึง 1 ม.ค. 2568
+   พอข้ามไปปี 2570 เพดานกระโดดเป็น 1 ม.ค. 2569 (เท่ากับเก็บ "ปีนี้ + ปีที่แล้ว") */
+function trMinDate(){
+  return fmtISO(new Date(new Date().getFullYear()-1, 0, 1));
+}
+/* วันที่ใหม่สุดที่เลือกได้ = วันนี้ (เลือกอนาคตไม่ได้) */
+function trToday(){
+  return fmtISO(new Date());
+}
 
 /* คอลัมน์: key ใช้ sort · num=จัดชิดขวา
    15 คอลัมน์ตาม AC คงลำดับเดิมครบ · เพิ่ม "ช่องทาง" (ต่อจากเลขที่สัญญา) และ "เอกสาร" (ท้ายสุด) */
@@ -148,12 +157,12 @@ var TR_PAGE  = 1;
 
 /* === logic === */
 
-/* ตรวจช่วงวันที่ของ filter ที่ส่งเข้ามา: from<=to และห่างกันไม่เกิน 2 ปี */
+/* ตรวจช่วงวันที่: from<=to · ห้ามเก่ากว่าเพดาน (1 ม.ค. ปีที่แล้ว) · ห้ามเลย "วันนี้" */
 function trRangeError(f){
   if(!f.from || !f.to) return 'กรุณาเลือกช่วงวันที่ทั้ง "ตั้งแต่" และ "ถึง"';
   if(f.from > f.to)    return 'วันที่ "ตั้งแต่" ต้องไม่เกินวันที่ "ถึง"';
-  var lim = dayjs(f.from).add(TR_MAX_YEARS,'year');
-  if(dayjs(f.to).isAfter(lim)) return 'ช่วงเวลาที่เลือกเกิน '+TR_MAX_YEARS+' ปี — เรียกข้อมูลได้สูงสุด '+TR_MAX_YEARS+' ปีต่อครั้ง';
+  if(f.from < trMinDate()) return 'เลือกข้อมูลย้อนหลังได้ถึง '+fmtTH(trMinDate())+' เท่านั้น (ต้นปีที่แล้ว)';
+  if(f.to > trToday())     return 'เลือกวันที่ในอนาคตไม่ได้ — วันที่ "ถึง" ต้องไม่เกินวันนี้';
   return '';
 }
 
@@ -373,9 +382,9 @@ function hTurnover(){
     +'<div class="card-title">'+ic('cal')+' เงื่อนไขการเรียกรายงาน</div>'
     +'<div class="row">'
       +'<div class="fg"><label class="fl">ตั้งแต่วันที่ <span class="req">*</span></label>'
-        +'<input type="date" id="tr-from" value="'+TR_DRAFT.from+'"></div>'
+        +'<input type="date" id="tr-from" min="'+trMinDate()+'" max="'+trToday()+'" value="'+TR_DRAFT.from+'"></div>'
       +'<div class="fg"><label class="fl">ถึงวันที่ <span class="req">*</span></label>'
-        +'<input type="date" id="tr-to" value="'+TR_DRAFT.to+'"></div>'
+        +'<input type="date" id="tr-to" min="'+trMinDate()+'" max="'+trToday()+'" value="'+TR_DRAFT.to+'"></div>'
       +'<div class="fg"><label class="fl">ประเภทสัญญา</label>'
         +'<select id="tr-type">'+typeOpts+'</select></div>'
       +'<div class="fg"><label class="fl">สกุลเงิน</label>'
@@ -389,7 +398,7 @@ function hTurnover(){
         +'<button class="btn btn-p" id="tr-search">'+ic('doc')+' ค้นหา</button>'
       +'</div>'
     +'</div>'
-    +'<div class="hint" style="margin-top:10px">'+ic('info')+' เรียกข้อมูลย้อนหลังได้สูงสุด '+TR_MAX_YEARS+' ปีต่อครั้ง · เลขที่สัญญาใช้ร่วมกับช่วงวันที่ · รายงานแสดงธุรกรรมทุกช่องทาง — ดาวน์โหลดเอกสารสัญญาได้เฉพาะรายการที่ทำผ่าน <strong>FX Online</strong></div>'
+    +'<div class="hint" style="margin-top:10px">'+ic('info')+' เลือกข้อมูลย้อนหลังได้ถึง '+fmtTH(trMinDate())+' (ต้นปีที่แล้ว) · เลขที่สัญญาใช้ร่วมกับช่วงวันที่ · รายงานแสดงธุรกรรมทุกช่องทาง — ดาวน์โหลดเอกสารสัญญาได้เฉพาะรายการที่ทำผ่าน <strong>FX Online</strong></div>'
   +'</div>';
 
   if(TR_ERR){
