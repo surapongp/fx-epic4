@@ -292,6 +292,8 @@ table.st tr.hl td{border-bottom:none;font-size:15px;font-weight:800;color:var(--
     <a id="nav-turnover" onclick="goPhase(12)">SA-1285 · รายงาน Turnover</a>
     <span class="sep">|</span>
     <a id="nav-bu1286" onclick="goPhase(13)">SA-1286 · รายงาน BU</a>
+    <span class="sep">|</span>
+    <a id="nav-sync400" onclick="goPhase(14)">AS400 Sync</a>
   </div>
 </div>
 <div class="main">
@@ -635,6 +637,8 @@ function updateBC(){
   if(ntr)ntr.className=P.phase===12?'active':'';
   var nbu=document.getElementById('nav-bu1286');
   if(nbu)nbu.className=P.phase===13?'active':'';
+  var nsy=document.getElementById('nav-sync400');
+  if(nsy)nsy.className=P.phase===14?'active':'';
 }
 function renderWZ(){
   var wz=document.getElementById('wz');
@@ -2048,6 +2052,7 @@ function render(){
   if(P.phase===11){el.innerHTML=hFwd2Api();bindFwd2Api();return;}
   if(P.phase===12){el.innerHTML=hTurnover();bindTurnover();return;}
   if(P.phase===13){el.innerHTML=hBU1286();bindBU1286();return;}
+  if(P.phase===14){el.innerHTML=hSync400();bindSync400();return;}
   var hMap=[null,h1,h2,h3,h4,h5];
   el.innerHTML=(hMap[P.step]||h1)();
   bindWizard();
@@ -2160,5 +2165,6 @@ render();
 <script src="forward-v2-api.js"></script>
 <script src="turnover-report.js"></script>
 <script src="bu-report.js"></script>
+<script src="as400-sync-check.js"></script>
 </body>
 </html>
